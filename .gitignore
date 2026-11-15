@@ -2,3 +2,6 @@ target/
 .DS_Store
 *.class
 *.jar
+
+# Leftover Node packages from the old article page build
+site/node_modules/
