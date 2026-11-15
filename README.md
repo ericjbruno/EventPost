@@ -32,7 +32,7 @@ Oracle NoSQL Database KV store.
 |---|---|---|
 | Pattern | Point-to-point | Publish/subscribe |
 | Who receives a message | Exactly one connected receiver | Every connected subscriber |
-| With several receivers | Messages are shared out between them | Each one gets every update |
+| With several receivers | Messages are distributed between them | Each one gets every update |
 | No receiver connected | Messages wait in the queue | Messages aren't kept |
 | Persisted | Yes (see [Persistence](#persistence)) | No |
 | Best for | Jobs and commands that must each be handled once | Current state and live notifications |
@@ -413,6 +413,9 @@ MessageServer/
 │   ├── sse/                        Queues, topics and message handling
 │   └── persist/                    Persistence: NoHeapDB and Oracle NoSQL
 ├── sample-apps/                    Sample applications
+├── article/                        The article (ARTICLE.md) and its diagrams
+├── site/                           Article page for ericbruno.com:
+│                                   cd site && npm install && npm run build
 ├── pom.xml
 └── run                             Starts the server
 ```
