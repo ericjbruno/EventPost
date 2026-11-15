@@ -1,0 +1,75 @@
+package sselibrary;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URL;
+import java.net.URLConnection;
+
+/**
+ * @author ericjbruno
+ */
+public class SSEDataPublisher {
+    static boolean debug = false;
+	
+	public SSEDataPublisher() {
+		this(false);
+	}
+	
+	public SSEDataPublisher(boolean debug) {
+		this.debug = debug;
+	}
+	
+    public static void sendMessage(
+                            String serverURL, 
+							String data, 
+							String authCode) throws Exception {
+        if ( debug == true ) {
+            log("publishing to " + serverURL);
+        }
+
+		String event = "event: message\n";
+		String retry = "retry: 300000\n";
+		data = "data: " + data + "\n\n";
+
+		// Construct the request
+		//
+		URL url= new URL(serverURL);
+		URI uri = new URI(
+				url.getProtocol(), url.getUserInfo(), 
+				url.getHost(), url.getPort(), 
+				url.getPath(), url.getQuery(), url.getRef() );
+		url = new URL( uri.toASCIIString() );
+
+		URLConnection conn = url.openConnection();
+		HttpURLConnection urlConn = (HttpURLConnection)conn;
+		urlConn.setFixedLengthStreamingMode(
+				event.length() + retry.length() + data.length());
+		urlConn.setDoOutput(true);
+		urlConn.setDoInput(true);
+		urlConn.setRequestMethod("POST");
+		urlConn.addRequestProperty("Content-Type", "text/event-stream");
+		urlConn.addRequestProperty("Authorization-Info", authCode);
+        urlConn.addRequestProperty("Access-Control-Allow-Origin", "*");
+
+		PrintWriter out = 
+				new PrintWriter( urlConn.getOutputStream() );
+
+		out.write(event);
+		out.write(retry);
+		out.write(data);
+		out.flush();
+
+		BufferedReader rd = 
+			new BufferedReader(
+				new InputStreamReader(
+						conn.getInputStream()));
+		rd.close();
+    }
+	
+	protected static void log(String s) {
+		System.out.println("[iot-client-library] " + s);
+	}
+}
