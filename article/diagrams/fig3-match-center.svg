@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="450" viewBox="0 0 960 450" role="img" aria-labelledby="t d">
+  <title id="t">The Match Center example</title>
+  <desc id="d">The browser Scorekeeper POSTs the full match state to the "match" topic on every change and every second. Every Scoreboard, in any number of browsers, and the Java MatchFeed program receive it as a Server-Sent Events stream. Fans POST shout-outs from the Scoreboard to the "shoutouts" queue, which delivers each one to a single Scorekeeper; a featured shout-out goes back out as part of the match state.</desc>
+  <defs>
+    <style>
+      text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 13px; fill: #1f2937; }
+      .ttl { font-size: 15px; font-weight: 600; }
+      .sm, .sm text { font-size: 12px; fill: #374151; }
+      .xs, .xs text { font-size: 11px; fill: #6b7280; }
+      .mono, .mono text { font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace; font-size: 12px; }
+      .b { font-weight: 600; }
+      .c { text-anchor: middle; }
+      .server { fill: #F0F9FF; stroke: #7DD3FC; stroke-width: 1.5; }
+      .browser { fill: #FFF7ED; stroke: #C2410C; stroke-width: 1.25; }
+      .java { fill: #F0FDF4; stroke: #15803D; stroke-width: 1.25; }
+      .topic { fill: #DBEAFE; stroke: #2563EB; stroke-width: 1.25; }
+      .queue { fill: #FFEDD5; stroke: #C2410C; stroke-width: 1.25; }
+      .arr { stroke: #374151; stroke-width: 1.5; fill: none; marker-end: url(#ah); }
+      .ref { stroke: #6b7280; stroke-width: 1.25; fill: none; stroke-dasharray: 4 3; marker-end: url(#ah2); }
+    </style>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#374151"/>
+    </marker>
+    <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+  <rect width="960" height="450" fill="#ffffff"/>
+
+  <!-- Scorekeeper -->
+  <rect class="browser" x="30" y="140" width="210" height="140" rx="8"/>
+  <text x="46" y="164" class="ttl">Scorekeeper</text>
+  <text x="46" y="182" class="xs">browser · one per match</text>
+  <text x="46" y="208" class="sm">runs the score, clock</text>
+  <text x="46" y="224" class="sm">and match events</text>
+  <text x="46" y="248" class="sm">reads shout-outs, and can</text>
+  <text x="46" y="264" class="sm">feature one on every board</text>
+
+  <!-- Server -->
+  <rect class="server" x="350" y="20" width="260" height="380" rx="10"/>
+  <text x="370" y="46" class="ttl">MessageServer</text>
+
+  <rect class="topic" x="380" y="76" width="200" height="74" rx="10"/>
+  <text x="480" y="104" class="mono c b">topic: match</text>
+  <text x="480" y="124" class="xs c">the full match state</text>
+  <text x="480" y="139" class="xs c">to every subscriber</text>
+
+  <text x="480" y="210" class="xs c">Topic messages are never stored;</text>
+  <text x="480" y="226" class="xs c">queue messages are saved in the</text>
+  <text x="480" y="242" class="xs c">chosen store until they're read</text>
+
+  <rect class="queue" x="380" y="288" width="200" height="74" rx="10"/>
+  <text x="480" y="316" class="mono c b">queue: shoutouts</text>
+  <text x="480" y="336" class="xs c">each to one scorekeeper,</text>
+  <text x="480" y="351" class="xs c">kept until one reads it</text>
+
+  <!-- Subscribers and fans -->
+  <rect class="browser" x="720" y="34" width="210" height="80" rx="8"/>
+  <text x="736" y="58" class="b">Scoreboard <tspan class="xs" style="font-weight:400">× any number</tspan></text>
+  <text x="736" y="76" class="xs">browser</text>
+  <text x="736" y="98" class="sm">score, clock, events</text>
+
+  <rect class="java" x="720" y="134" width="210" height="80" rx="8"/>
+  <text x="736" y="158" class="b">MatchFeed</text>
+  <text x="736" y="176" class="xs">Java · MatchFeed.java</text>
+  <text x="736" y="198" class="sm">prints each new event</text>
+
+  <rect class="browser" x="720" y="284" width="210" height="80" rx="8"/>
+  <text x="736" y="308" class="b">Fan zone</text>
+  <text x="736" y="326" class="xs">on every Scoreboard</text>
+  <text x="736" y="348" class="sm">sends shout-outs</text>
+
+  <!-- Flows -->
+  <path class="arr" d="M240,180 C300,180 318,113 378,113"/>
+  <text x="288" y="98" class="xs c">POST state</text>
+  <text x="288" y="112" class="xs c">on change, every 1 s</text>
+
+  <path class="arr" d="M580,104 C640,104 660,74 718,74"/>
+  <text x="652" y="78" class="xs c">SSE</text>
+  <path class="arr" d="M580,124 C640,124 660,174 718,174"/>
+  <text x="636" y="178" class="xs c">SSE</text>
+
+  <path class="arr" d="M720,324 H582"/>
+  <text x="651" y="314" class="xs c">POST shout-out</text>
+
+  <path class="arr" d="M380,325 C318,325 300,250 242,250"/>
+  <text x="300" y="310" class="xs c">SSE</text>
+
+  <line x1="30" y1="418" x2="930" y2="418" stroke="#E5E7EB"/>
+  <text x="30" y="440" class="sm">Browsers publish with <tspan class="mono">fetch()</tspan> and receive with <tspan class="mono">EventSource</tspan>; MatchFeed uses <tspan class="mono">java.net.http</tspan>. Same messages, same server.</text>
+</svg>

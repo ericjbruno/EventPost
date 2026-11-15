@@ -1,7 +1,8 @@
 package messageserver.sse;
 
 import java.util.ArrayList;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import messageserver.persist.MessagePersistance;
 import messageserver.persist.MessagePersistanceFactory;
@@ -13,9 +14,11 @@ public class Queue extends Destination {
 
     // Unbounded, since every persisted message must have its ID queued for
     // delivery. A fixed capacity rejected IDs once full (stranding messages
-    // that were already persisted) and failed to reload a large backlog
-    final protected LinkedBlockingQueue<Long> messageIds
-            = new LinkedBlockingQueue<>();
+    // that were already persisted) and failed to reload a large backlog.
+    // A deque, so a message taken for a receiver that has gone can be put
+    // back at the front
+    final protected LinkedBlockingDeque<Long> messageIds
+            = new LinkedBlockingDeque<>();
 
     final protected MessagePersistance persistance
             = MessagePersistanceFactory
@@ -43,11 +46,34 @@ public class Queue extends Destination {
 
     public Message getNextMessage() throws InterruptedException {
         // Blocking call
-        Long messageId = messageIds.take();
+        Long messageId = messageIds.takeFirst();
 
         // Load the message data using the ID
         Message message = persistance.getMessage(getName(), messageId);
         return message;
+    }
+
+    // Waits up to the timeout for the next message, returning null if none
+    // arrives, so a caller can check between waits whether its receiver is
+    // still connected
+    public Message pollNextMessage(long timeout, TimeUnit unit) throws InterruptedException {
+        Long messageId = messageIds.pollFirst(timeout, unit);
+        if (messageId == null) {
+            return null;
+        }
+
+        Message message = persistance.getMessage(getName(), messageId);
+        if (message == null) {
+            // The body is missing from storage; nothing to deliver
+            return null;
+        }
+        return message;
+    }
+
+    // Puts back a message that was taken but not delivered, at the front of
+    // the queue so it keeps its place
+    public void returnMessage(Long messageId) {
+        messageIds.addFirst(messageId);
     }
 
     public boolean addMessage(String message) {

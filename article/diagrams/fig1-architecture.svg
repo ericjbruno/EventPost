@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="500" viewBox="0 0 960 500" role="img" aria-labelledby="t d">
+  <title id="t">MessageServer architecture</title>
+  <desc id="d">Clients on the left, two browser pages and a Java program, publish with HTTP POST and receive a Server-Sent Events stream with HTTP GET. In the middle, MessageServer, a Micronaut application, has a TopicController and a QueueController, both extending Messenger. Topics keep only the latest message in memory. Queues keep message IDs in a LinkedBlockingDeque and save message bodies through the MessagePersistance interface. On the right, one of three stores is chosen at startup: NoHeapDB in memory (the default), NoHeapDB persisted to files, or an Oracle NoSQL KV store.</desc>
+  <defs>
+    <style>
+      text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 13px; fill: #1f2937; }
+      .ttl { font-size: 15px; font-weight: 600; }
+      .sm, .sm text { font-size: 12px; fill: #374151; }
+      .xs, .xs text { font-size: 11px; fill: #6b7280; }
+      .mono, .mono text { font-family: Menlo, Consolas, "DejaVu Sans Mono", monospace; font-size: 12px; }
+      .b { font-weight: 600; }
+      .c { text-anchor: middle; }
+      .client { fill: #FFF7ED; stroke: #FDBA74; stroke-width: 1.5; }
+      .server { fill: #F0F9FF; stroke: #7DD3FC; stroke-width: 1.5; }
+      .store { fill: #F0FDF4; stroke: #86EFAC; stroke-width: 1.5; }
+      .obj { fill: #ffffff; stroke: #9A3412; stroke-width: 1.25; }
+      .sobj { fill: #ffffff; stroke: #0369A1; stroke-width: 1.25; }
+      .gobj { fill: #ffffff; stroke: #15803D; stroke-width: 1.25; }
+      .gobj0 { fill: #ffffff; stroke: #86EFAC; stroke-width: 1.25; stroke-dasharray: 4 3; }
+      .arr { stroke: #374151; stroke-width: 1.5; fill: none; marker-end: url(#ah); }
+      .ref { stroke: #6b7280; stroke-width: 1.25; fill: none; stroke-dasharray: 4 3; marker-end: url(#ah2); }
+    </style>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#374151"/>
+    </marker>
+    <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+  <rect width="960" height="500" fill="#ffffff"/>
+
+  <!-- Clients -->
+  <rect class="client" x="20" y="20" width="210" height="460" rx="10"/>
+  <text x="40" y="48" class="ttl">Clients</text>
+  <text x="40" y="66" class="xs">any HTTP client, no library</text>
+
+  <rect class="obj" x="40" y="90" width="170" height="80" rx="6"/>
+  <text x="54" y="112" class="b">Scorekeeper</text>
+  <text x="54" y="129" class="xs">browser · fetch + EventSource</text>
+  <text x="54" y="152" class="sm">publishes the match</text>
+
+  <rect class="obj" x="40" y="190" width="170" height="80" rx="6"/>
+  <text x="54" y="212" class="b">Scoreboard</text>
+  <text x="54" y="229" class="xs">browser · fetch + EventSource</text>
+  <text x="54" y="252" class="sm">shows it; sends shout-outs</text>
+
+  <rect class="obj" x="40" y="290" width="170" height="80" rx="6"/>
+  <text x="54" y="312" class="b">MatchFeed</text>
+  <text x="54" y="329" class="xs">Java · java.net.http</text>
+  <text x="54" y="352" class="sm">prints match events</text>
+
+  <text x="40" y="404" class="xs">Publish: POST, with</text>
+  <text x="40" y="420" class="xs">Content-Type: text/event-stream</text>
+  <text x="40" y="444" class="xs">Receive: GET, and read the</text>
+  <text x="40" y="460" class="xs">Server-Sent Events stream</text>
+
+  <!-- HTTP between clients and server -->
+  <path class="arr" d="M232,214 H326"/>
+  <text x="279" y="204" class="xs c">POST …/publish</text>
+  <path class="arr" d="M326,254 H232"/>
+  <text x="279" y="274" class="xs c">SSE stream</text>
+
+  <!-- Server -->
+  <rect class="server" x="330" y="20" width="380" height="460" rx="10"/>
+  <text x="350" y="48" class="ttl">MessageServer</text>
+  <text x="350" y="66" class="xs">Micronaut 5 · Java 26 · /messageserver/api</text>
+
+  <rect class="sobj" x="350" y="88" width="160" height="68" rx="6"/>
+  <text x="430" y="112" class="mono c b">TopicController</text>
+  <text x="430" y="133" class="xs c">POST /topic/publish</text>
+  <text x="430" y="146" class="xs c">GET /topic/{name}</text>
+
+  <rect class="sobj" x="530" y="88" width="160" height="68" rx="6"/>
+  <text x="610" y="112" class="mono c b">QueueController</text>
+  <text x="610" y="133" class="xs c">POST /queue/publish</text>
+  <text x="610" y="146" class="xs c">GET /queue/{name}</text>
+
+  <path class="arr" d="M430,156 V196"/>
+  <path class="arr" d="M610,156 V196"/>
+
+  <rect class="sobj" x="350" y="198" width="160" height="72" rx="6"/>
+  <text x="430" y="222" class="mono c b">Topic</text>
+  <text x="430" y="242" class="sm c">the latest message</text>
+  <text x="430" y="259" class="xs c">in memory, never stored</text>
+
+  <rect class="sobj" x="530" y="198" width="160" height="72" rx="6"/>
+  <text x="610" y="222" class="mono c b">Queue</text>
+  <text x="610" y="242" class="sm c">message IDs, in order</text>
+  <text x="610" y="259" class="xs c">LinkedBlockingDeque</text>
+
+  <path class="arr" d="M610,270 V314"/>
+
+  <rect class="sobj" x="350" y="316" width="160" height="72" rx="6"/>
+  <text x="430" y="341" class="mono c b">Messenger</text>
+  <text x="430" y="362" class="xs c">base class: one message</text>
+  <text x="430" y="376" class="xs c">per data: line</text>
+
+  <rect class="sobj" x="530" y="316" width="160" height="72" rx="6"/>
+  <text x="610" y="341" class="mono c b">MessagePersistance</text>
+  <text x="610" y="362" class="xs c">interface; the factory picks</text>
+  <text x="610" y="376" class="xs c">one at startup</text>
+
+  <line x1="350" y1="412" x2="690" y2="412" stroke="#BAE6FD"/>
+  <text x="350" y="436" class="sm">Each queue message is saved before its ID is queued,</text>
+  <text x="350" y="454" class="sm">and deleted once it's sent to a receiver.</text>
+
+  <!-- Storage -->
+  <rect class="store" x="760" y="20" width="180" height="460" rx="10"/>
+  <text x="780" y="48" class="ttl">Storage</text>
+  <text x="780" y="66" class="xs">for queue messages</text>
+
+  <rect class="gobj" x="775" y="90" width="150" height="80" rx="6"/>
+  <text x="789" y="112" class="b">NoHeapDB</text>
+  <text x="789" y="130" class="sm">in memory (default)</text>
+  <text x="789" y="152" class="xs">off-heap; lost on restart</text>
+
+  <rect class="gobj0" x="775" y="190" width="150" height="80" rx="6"/>
+  <text x="789" y="212" class="b">NoHeapDB</text>
+  <text x="789" y="230" class="sm">persisted</text>
+  <text x="789" y="252" class="xs">files in ~/JavaOffHeap</text>
+
+  <rect class="gobj0" x="775" y="290" width="150" height="80" rx="6"/>
+  <text x="789" y="312" class="b">Oracle NoSQL</text>
+  <text x="789" y="330" class="sm">KV store</text>
+  <text x="789" y="352" class="xs">at 127.0.0.1:5001</text>
+
+  <path class="arr" d="M690,345 C735,345 730,130 773,130"/>
+  <path class="ref" d="M690,350 C735,350 735,230 773,230"/>
+  <path class="ref" d="M690,355 C730,355 740,330 773,330"/>
+
+  <text x="780" y="404" class="sm">One is chosen with a</text>
+  <text x="780" y="421" class="sm">startup setting</text>
+  <text x="780" y="438" class="xs">(see Figure 6)</text>
+</svg>

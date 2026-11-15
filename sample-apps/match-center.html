@@ -1,0 +1,580 @@
+<!doctype html>
+<!--
+  Match Center: a browser-only MessageServer sample that uses both a topic
+  and a queue, with no client library. Open it in two or more windows.
+
+  - The Scorekeeper view runs the match and publishes its full state to the
+    "match" topic. Every open Scoreboard receives each update.
+  - Fans send shout-outs from the Scoreboard view to the "shoutouts" queue.
+    Each one goes to just one Scorekeeper, and waits in the queue if no
+    Scorekeeper is open. The Scorekeeper can feature one on every board.
+
+  Publishing is a fetch() POST; receiving is the browser's EventSource.
+
+  Start the server from the MessageServer folder so it also serves this page:
+
+    java -Dmicronaut.router.static-resources.samples.paths=file:sample-apps \
+         '-Dmicronaut.router.static-resources.samples.mapping=/samples/**' \
+         -jar target/MessageServer-1.0-SNAPSHOT.jar
+
+  Then open http://localhost:8080/samples/match-center.html#scorekeeper in one
+  window and http://localhost:8080/samples/match-center.html in others.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Match Center</title>
+<style>
+  :root {
+    --bg: #0b1020;
+    --panel: rgba(255, 255, 255, 0.05);
+    --panel-border: rgba(255, 255, 255, 0.10);
+    --text: #eef1f7;
+    --muted: #9aa4b8;
+    --accent: #ffd166;
+    --live: #2ee59d;
+    --danger: #ff6b6b;
+    --home: #e63946;
+    --away: #3a86ff;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--text);
+    background:
+      radial-gradient(1200px 600px at 50% -200px, rgba(58, 134, 255, 0.25), transparent 70%),
+      radial-gradient(800px 400px at 50% 110%, rgba(46, 229, 157, 0.10), transparent 70%),
+      var(--bg);
+    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  button, input, select { font: inherit; color: inherit; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 20px 16px 48px; }
+
+  /* Header */
+  header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+  .brand { font-weight: 800; letter-spacing: 0.04em; font-size: 1.15rem; }
+  .brand span { color: var(--accent); }
+  nav { display: flex; gap: 4px; padding: 4px; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 999px; }
+  nav a { padding: 6px 16px; border-radius: 999px; color: var(--muted); text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+  nav a.active { background: var(--text); color: var(--bg); }
+  .conn { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--muted); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--danger); }
+  .conn.on .dot { background: var(--live); box-shadow: 0 0 0 4px rgba(46, 229, 157, 0.18); }
+
+  .panel { background: var(--panel); border: 1px solid var(--panel-border); border-radius: var(--radius); padding: 20px; }
+  .panel h2 { margin: 0 0 14px; font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .grid { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; margin-top: 16px; }
+  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+  [hidden] { display: none !important; }
+
+  /* Scoreboard */
+  .board { position: relative; overflow: hidden; padding: 28px 20px 24px; text-align: center; }
+  .board::before, .board::after {
+    content: ""; position: absolute; top: 0; bottom: 0; width: 6px;
+  }
+  .board::before { left: 0; background: var(--home); }
+  .board::after { right: 0; background: var(--away); }
+  .teams { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; }
+  .team-name { font-size: clamp(1rem, 3vw, 1.5rem); font-weight: 700; overflow-wrap: anywhere; }
+  .score {
+    font-size: clamp(3.5rem, 13vw, 7rem); font-weight: 800; line-height: 1;
+    font-variant-numeric: tabular-nums; margin-top: 6px;
+  }
+  #homeScore { color: var(--home); text-shadow: 0 0 32px color-mix(in srgb, var(--home) 55%, transparent); }
+  #awayScore { color: var(--away); text-shadow: 0 0 32px color-mix(in srgb, var(--away) 55%, transparent); }
+  .middle { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 110px; }
+  .clock {
+    font-size: clamp(1.4rem, 4vw, 2rem); font-weight: 700; font-variant-numeric: tabular-nums;
+    padding: 4px 14px; border-radius: 10px; background: rgba(0, 0, 0, 0.35); border: 1px solid var(--panel-border);
+  }
+  .period { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+  .badge { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.12em; padding: 2px 8px; border-radius: 6px; background: var(--danger); }
+  .badge.paused { background: rgba(255, 255, 255, 0.15); color: var(--muted); }
+  .pulse { animation: pulse 0.8s ease-out; }
+  @keyframes pulse { 0% { transform: scale(1.35); } 100% { transform: scale(1); } }
+
+  .waiting { text-align: center; color: var(--muted); padding: 48px 20px; }
+  .waiting strong { display: block; color: var(--text); font-size: 1.2rem; margin-bottom: 6px; }
+
+  /* Featured shout-out */
+  .featured {
+    margin-top: 16px; display: flex; gap: 14px; align-items: center;
+    padding: 16px 20px; border-radius: var(--radius);
+    background: linear-gradient(90deg, rgba(255, 209, 102, 0.18), rgba(255, 209, 102, 0.04));
+    border: 1px solid rgba(255, 209, 102, 0.35);
+    animation: rise 0.5s ease-out;
+  }
+  .featured .icon { font-size: 1.8rem; }
+  .featured .from { font-size: 0.8rem; color: var(--accent); font-weight: 700; }
+  .featured .text { font-size: 1.1rem; overflow-wrap: anywhere; }
+
+  /* Event feed */
+  .events { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .events li {
+    display: flex; gap: 12px; align-items: baseline; padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.25); border-radius: 10px;
+  }
+  .events li.fresh, .inbox li.fresh { animation: rise 0.4s ease-out; }
+  .events .min { font-weight: 800; color: var(--accent); min-width: 34px; font-variant-numeric: tabular-nums; }
+  .events .empty { color: var(--muted); background: none; padding: 0; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* Forms and buttons */
+  label { display: block; font-size: 0.8rem; color: var(--muted); margin: 10px 0 4px; }
+  input[type=text], select {
+    width: 100%; padding: 10px 12px; border-radius: 10px;
+    background: rgba(0, 0, 0, 0.3); border: 1px solid var(--panel-border);
+  }
+  input[type=color] { width: 44px; height: 40px; padding: 2px; border-radius: 10px; background: none; border: 1px solid var(--panel-border); }
+  .row { display: flex; gap: 8px; align-items: end; }
+  .row > :first-child { flex: 1; }
+  button {
+    cursor: pointer; border: 1px solid var(--panel-border); background: rgba(255, 255, 255, 0.08);
+    padding: 10px 14px; border-radius: 10px; font-weight: 600;
+  }
+  button:hover { background: rgba(255, 255, 255, 0.14); }
+  button.primary { background: var(--accent); color: #1b1600; border-color: transparent; }
+  button.primary:hover { filter: brightness(1.08); }
+  button.goal-home { background: var(--home); border-color: transparent; }
+  button.goal-away { background: var(--away); border-color: transparent; }
+  button:focus-visible, input:focus-visible, select:focus-visible, nav a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .hint { color: var(--muted); font-size: 0.85rem; margin: 10px 0 0; }
+
+  /* Shout-out inbox */
+  .inbox { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; max-height: 340px; overflow: auto; }
+  .inbox li { display: flex; gap: 10px; align-items: center; padding: 10px 12px; background: rgba(0, 0, 0, 0.25); border-radius: 10px; }
+  .inbox li.on-air { outline: 1px solid var(--accent); }
+  .inbox .msg { flex: 1; overflow-wrap: anywhere; }
+  .inbox .msg b { color: var(--accent); }
+  .inbox button { padding: 6px 10px; font-size: 0.85rem; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+    background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 999px;
+    font-weight: 600; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); animation: rise 0.3s ease-out;
+  }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">MATCH<span>CENTER</span></div>
+    <nav>
+      <a href="#scoreboard" id="tabScoreboard">Scoreboard</a>
+      <a href="#scorekeeper" id="tabScorekeeper">Scorekeeper</a>
+    </nav>
+    <div class="conn" id="conn"><span class="dot"></span><span id="connText">Connecting…</span></div>
+  </header>
+
+  <!-- Scoreboard view: subscribes to the "match" topic, sends shout-outs to the "shoutouts" queue -->
+  <section id="scoreboardView" hidden>
+    <div class="panel waiting" id="waiting">
+      <strong>Waiting for kick-off</strong>
+      Open the <a href="#scorekeeper" style="color: var(--accent)">Scorekeeper</a> view in another window to start the match.
+    </div>
+
+    <div id="liveBoard" hidden>
+      <div class="panel board">
+        <div class="teams">
+          <div><div class="team-name" id="homeName"></div><div class="score" id="homeScore">0</div></div>
+          <div class="middle">
+            <span class="badge" id="liveBadge">LIVE</span>
+            <div class="clock" id="clock">00:00</div>
+            <div class="period" id="period"></div>
+          </div>
+          <div><div class="team-name" id="awayName"></div><div class="score" id="awayScore">0</div></div>
+        </div>
+      </div>
+
+      <div class="featured" id="featured" hidden>
+        <div class="icon">📣</div>
+        <div><div class="from" id="featuredFrom"></div><div class="text" id="featuredText"></div></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Match events</h2>
+        <ul class="events" id="events"><li class="empty">No events yet</li></ul>
+      </div>
+      <form class="panel" id="shoutForm">
+        <h2>Fan zone</h2>
+        <label for="fanName">Your name</label>
+        <input type="text" id="fanName" maxlength="24" placeholder="Ada" required>
+        <label for="fanText">Shout-out</label>
+        <input type="text" id="fanText" maxlength="120" placeholder="What a save! 🧤" required>
+        <div class="buttons"><button class="primary" type="submit">Send shout-out</button></div>
+        <p class="hint">Goes to the scorekeeper, who can put it up on every scoreboard.</p>
+      </form>
+    </div>
+  </section>
+
+  <!-- Scorekeeper view: publishes to the "match" topic, receives from the "shoutouts" queue -->
+  <section id="scorekeeperView" hidden>
+    <div class="grid" style="margin-top: 0">
+      <div class="panel">
+        <h2>Teams</h2>
+        <label for="homeInput">Home</label>
+        <div class="row"><input type="text" id="homeInput" maxlength="20"><input type="color" id="homeColor" aria-label="Home colour"></div>
+        <label for="awayInput">Away</label>
+        <div class="row"><input type="text" id="awayInput" maxlength="20"><input type="color" id="awayColor" aria-label="Away colour"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Clock</h2>
+        <div class="clock" id="keeperClock" style="display: inline-block">00:00</div>
+        <label for="periodSelect">Period</label>
+        <select id="periodSelect">
+          <option>Pre-match</option><option>1st half</option><option>Half time</option>
+          <option>2nd half</option><option>Full time</option>
+        </select>
+        <div class="buttons">
+          <button class="primary" id="startStop" type="button">Start clock</button>
+          <button id="resetClock" type="button">Reset clock</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Score</h2>
+        <div class="buttons">
+          <button class="goal-home" id="goalHome" type="button">⚽ Goal home</button>
+          <button class="goal-away" id="goalAway" type="button">⚽ Goal away</button>
+          <button id="cardHome" type="button">🟨 Card home</button>
+          <button id="cardAway" type="button">🟨 Card away</button>
+          <button id="undo" type="button">↶ Undo last event</button>
+        </div>
+        <label for="commentary">Commentary</label>
+        <div class="row">
+          <input type="text" id="commentary" maxlength="80" placeholder="Corner to the Lions">
+          <button id="addCommentary" type="button">Add</button>
+        </div>
+        <div class="buttons"><button id="newMatch" type="button">New match</button></div>
+      </div>
+
+      <div class="panel">
+        <h2>Shout-out inbox</h2>
+        <ul class="inbox" id="inbox"></ul>
+        <p class="hint" id="inboxHint">Fans' shout-outs arrive here. Each one goes to just one scorekeeper, and they wait in the queue while no scorekeeper is open.</p>
+        <div class="buttons"><button id="clearFeatured" type="button">Take featured shout-out down</button></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  // ---------------------------------------------------------------------
+  // MessageServer access: everything a browser needs
+  // ---------------------------------------------------------------------
+
+  // The page is served by MessageServer, so the API is on the same origin.
+  // Add ?server=http://host:port to use another server (that one needs CORS).
+  const SERVER = new URLSearchParams(location.search).get("server")
+      || (location.protocol.startsWith("http") ? location.origin : "http://localhost:8080");
+  const API = SERVER + "/messageserver/api";
+
+  const TOPIC = "match";       // scorekeeper -> every scoreboard
+  const QUEUE = "shoutouts";   // fans -> one scorekeeper
+
+  // Publish one message (a single line of text) to a queue or topic
+  async function publish(kind, name, message) {
+    const response = await fetch(`${API}/${kind}/publish?name=${encodeURIComponent(name)}`, {
+      method: "POST",
+      headers: { "Content-Type": "text/event-stream" },
+      body: `data: ${message}\n\n`,
+    });
+    if (!response.ok) throw new Error(`Publish failed: HTTP ${response.status}`);
+  }
+
+  // Receive messages from a queue or topic. EventSource reconnects on its own
+  function subscribe(kind, name, onMessage) {
+    const source = new EventSource(`${API}/${kind}/${encodeURIComponent(name)}`);
+    source.onopen = () => setConnected(true);
+    source.onerror = () => setConnected(false);
+    source.onmessage = (event) => onMessage(JSON.parse(event.data));
+    return source;
+  }
+
+  // ---------------------------------------------------------------------
+  // Page helpers
+  // ---------------------------------------------------------------------
+
+  const $ = (id) => document.getElementById(id);
+
+  function setConnected(on) {
+    $("conn").classList.toggle("on", on);
+    $("connText").textContent = on ? "Connected" : "Reconnecting…";
+  }
+
+  function toast(text) {
+    const el = document.createElement("div");
+    el.className = "toast";
+    el.textContent = text;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2500);
+  }
+
+  function formatClock(seconds) {
+    const m = Math.floor(seconds / 60), s = seconds % 60;
+    return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+  }
+
+  // Fan text is shown with textContent, never innerHTML, so it can't inject markup
+  function item(className, parts) {
+    const li = document.createElement("li");
+    if (className) li.className = className;
+    for (const [tag, text, cls] of parts) {
+      const el = document.createElement(tag);
+      el.textContent = text;
+      if (cls) el.className = cls;
+      li.appendChild(el);
+    }
+    return li;
+  }
+
+  // ---------------------------------------------------------------------
+  // Scoreboard view
+  // ---------------------------------------------------------------------
+
+  let lastScores = null;
+  let lastEvents = "";
+
+  function showMatch(state) {
+    $("waiting").hidden = true;
+    $("liveBoard").hidden = false;
+
+    document.documentElement.style.setProperty("--home", state.home.color);
+    document.documentElement.style.setProperty("--away", state.away.color);
+    $("homeName").textContent = state.home.name;
+    $("awayName").textContent = state.away.name;
+
+    // Pulse a score when it changes
+    for (const side of ["home", "away"]) {
+      const el = $(side + "Score");
+      if (lastScores && lastScores[side] !== state[side].score) {
+        el.classList.remove("pulse"); void el.offsetWidth; el.classList.add("pulse");
+      }
+      el.textContent = state[side].score;
+    }
+    lastScores = { home: state.home.score, away: state.away.score };
+
+    $("clock").textContent = formatClock(state.clock);
+    $("period").textContent = state.period;
+    $("liveBadge").textContent = state.running ? "LIVE" : "PAUSED";
+    $("liveBadge").className = "badge" + (state.running ? "" : " paused");
+
+    // The state arrives every second; only rebuild the list when it changed,
+    // and animate just the newest event
+    const eventsKey = JSON.stringify(state.events);
+    if (eventsKey !== lastEvents) {
+      const added = lastEvents && state.events.length > JSON.parse(lastEvents).length;
+      lastEvents = eventsKey;
+      $("events").replaceChildren(...(state.events.length
+          ? state.events.slice().reverse().map((e, i) =>
+              item(added && i === 0 ? "fresh" : "", [["span", e.minute, "min"], ["span", e.text]]))
+          : [item("empty", [["span", "No events yet"]])]));
+    }
+
+    const featured = state.shoutout;
+    $("featured").hidden = !featured;
+    if (featured) {
+      $("featuredFrom").textContent = featured.name + " says";
+      $("featuredText").textContent = featured.text;
+    }
+  }
+
+  $("shoutForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const shout = { name: $("fanName").value.trim(), text: $("fanText").value.trim(), sent: Date.now() };
+    if (!shout.name || !shout.text) return;
+    try {
+      await publish("queue", QUEUE, JSON.stringify(shout));
+      $("fanText").value = "";
+      toast("Shout-out sent to the scorekeeper");
+    } catch (e) {
+      toast("Couldn't send: " + e.message);
+    }
+  });
+
+  // ---------------------------------------------------------------------
+  // Scorekeeper view
+  // ---------------------------------------------------------------------
+
+  // The match state. It's saved in the browser so reloading doesn't reset it
+  const newMatch = () => ({
+    home: { name: "Lions", color: "#e63946", score: 0 },
+    away: { name: "Falcons", color: "#3a86ff", score: 0 },
+    period: "Pre-match",
+    elapsedMs: 0,          // clock time before the current run
+    startedAt: null,       // when the clock was last started, if running
+    events: [],
+    shoutout: null,
+  });
+
+  let match = load() || newMatch();
+  let inbox = [];
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem("match-center")); } catch { return null; }
+  }
+  function save() {
+    try { localStorage.setItem("match-center", JSON.stringify(match)); } catch { /* not available */ }
+  }
+
+  const elapsedSeconds = () =>
+    Math.floor((match.elapsedMs + (match.startedAt ? Date.now() - match.startedAt : 0)) / 1000);
+  const minute = () => Math.floor(elapsedSeconds() / 60) + 1 + "'";
+
+  // Publish the full state, so a scoreboard that missed a message, or just
+  // opened, is up to date with the next one
+  async function broadcast() {
+    const state = {
+      home: match.home, away: match.away, period: match.period,
+      clock: elapsedSeconds(), running: !!match.startedAt,
+      events: match.events.slice(-8), shoutout: match.shoutout,
+    };
+    try {
+      await publish("topic", TOPIC, JSON.stringify(state));
+      setConnected(true);
+    } catch {
+      setConnected(false);
+    }
+  }
+
+  function changed() {
+    save();
+    renderKeeper();
+    broadcast();
+  }
+
+  function addEvent(text, goal) {
+    match.events.push({ minute: minute(), text, goal });   // goal: "home" or "away"
+    changed();
+  }
+
+  function renderKeeper() {
+    $("homeInput").value = match.home.name;
+    $("awayInput").value = match.away.name;
+    $("homeColor").value = match.home.color;
+    $("awayColor").value = match.away.color;
+    $("periodSelect").value = match.period;
+    $("keeperClock").textContent = formatClock(elapsedSeconds());
+    $("startStop").textContent = match.startedAt ? "Pause clock" : "Start clock";
+
+    $("inbox").replaceChildren(...inbox.map((shout, i) => {
+      const onAir = match.shoutout && match.shoutout.sent === shout.sent;
+      const li = item((onAir ? "on-air " : "") + (shout.fresh ? "fresh" : ""), []);
+      shout.fresh = false;
+      const msg = document.createElement("span");
+      msg.className = "msg";
+      const who = document.createElement("b");
+      who.textContent = shout.name + ": ";
+      msg.append(who, shout.text);
+      const feature = document.createElement("button");
+      feature.textContent = "Feature";
+      feature.onclick = () => { match.shoutout = { name: shout.name, text: shout.text, sent: shout.sent }; changed(); };
+      const dismiss = document.createElement("button");
+      dismiss.textContent = "✕";
+      dismiss.setAttribute("aria-label", "Dismiss");
+      dismiss.onclick = () => { inbox.splice(i, 1); renderKeeper(); };
+      li.append(msg, feature, dismiss);
+      return li;
+    }));
+    $("inboxHint").hidden = inbox.length > 0;
+  }
+
+  for (const side of ["home", "away"]) {
+    $(side + "Input").addEventListener("input", (e) => { match[side].name = e.target.value || side; changed(); });
+    $(side + "Color").addEventListener("input", (e) => { match[side].color = e.target.value; changed(); });
+    $("goal" + side[0].toUpperCase() + side.slice(1)).addEventListener("click", () => {
+      match[side].score++;
+      addEvent(`⚽ GOAL! ${match[side].name}  ${match.home.score}–${match.away.score}`, side);
+    });
+    $("card" + side[0].toUpperCase() + side.slice(1)).addEventListener("click", () =>
+      addEvent(`🟨 Yellow card, ${match[side].name}`));
+  }
+
+  $("undo").addEventListener("click", () => {
+    const last = match.events.pop();
+    if (!last) return;
+    // Undoing a goal takes it off the score too
+    if (last.goal) {
+      match[last.goal].score = Math.max(0, match[last.goal].score - 1);
+    }
+    changed();
+  });
+
+  $("addCommentary").addEventListener("click", () => {
+    const text = $("commentary").value.trim();
+    if (text) { addEvent("🎙️ " + text); $("commentary").value = ""; }
+  });
+  $("commentary").addEventListener("keydown", (e) => { if (e.key === "Enter") $("addCommentary").click(); });
+
+  $("periodSelect").addEventListener("change", (e) => {
+    match.period = e.target.value;
+    addEvent("⏱️ " + match.period);
+  });
+
+  $("startStop").addEventListener("click", () => {
+    if (match.startedAt) {
+      match.elapsedMs += Date.now() - match.startedAt;
+      match.startedAt = null;
+    } else {
+      match.startedAt = Date.now();
+    }
+    changed();
+  });
+  $("resetClock").addEventListener("click", () => { match.elapsedMs = 0; match.startedAt = match.startedAt && Date.now(); changed(); });
+  $("newMatch").addEventListener("click", () => { if (confirm("Start a new match?")) { match = newMatch(); changed(); } });
+  $("clearFeatured").addEventListener("click", () => { match.shoutout = null; changed(); });
+
+  // ---------------------------------------------------------------------
+  // Switching between the two views
+  // ---------------------------------------------------------------------
+
+  let source = null;      // the current EventSource
+  let heartbeat = null;   // the scorekeeper's republish timer
+
+  function showView() {
+    const keeper = location.hash === "#scorekeeper";
+    $("scoreboardView").hidden = keeper;
+    $("scorekeeperView").hidden = !keeper;
+    $("tabScoreboard").classList.toggle("active", !keeper);
+    $("tabScorekeeper").classList.toggle("active", keeper);
+    document.title = keeper ? "Scorekeeper · Match Center" : "Match Center";
+
+    if (source) source.close();
+    clearInterval(heartbeat);
+    setConnected(false);
+
+    if (keeper) {
+      // Fans' shout-outs: each one is delivered to just one scorekeeper
+      source = subscribe("queue", QUEUE, (shout) => {
+        inbox.unshift({ ...shout, fresh: true });
+        renderKeeper();
+        toast(`New shout-out from ${shout.name}`);
+      });
+      renderKeeper();
+      broadcast();
+      // Republish every second while the clock runs (it drives the scoreboard
+      // clock), and every few seconds otherwise so new scoreboards catch up
+      let ticks = 0;
+      heartbeat = setInterval(() => {
+        $("keeperClock").textContent = formatClock(elapsedSeconds());
+        if (match.startedAt || ++ticks % 3 === 0) broadcast();
+      }, 1000);
+    } else {
+      // The match state: every open scoreboard receives every update
+      source = subscribe("topic", TOPIC, showMatch);
+    }
+  }
+
+  window.addEventListener("hashchange", showView);
+  showView();
+</script>
+</body>
+</html>

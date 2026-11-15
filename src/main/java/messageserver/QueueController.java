@@ -11,12 +11,17 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.Produces;
+import io.micronaut.http.server.netty.NettyHttpRequest;
 import io.micronaut.http.sse.Event;
 import io.micronaut.session.Session;
+import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
+import io.netty.channel.Channel;
 import io.reactivex.schedulers.Schedulers;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import messageserver.persist.MessagePersistance;
 import messageserver.persist.MessagePersistanceFactory;
 import messageserver.sse.Message;
@@ -44,25 +49,81 @@ public class QueueController extends Messenger {
     //
     @Get("/queue/{name}")
     @Produces(MediaType.TEXT_EVENT_STREAM)
-    public Publisher<Event<String>> index(Optional<String> name) {
+    public Publisher<Event<String>> index(Optional<String> name, HttpRequest<?> request) {
         // Determine queue to listen to
         //
         System.out.println("Queue name: " + name);
         Queue dest = getQueue(name.get());
 
-        return Flowable.<Event<String>, Integer>generate(() -> 0, (i, emitter) -> {
-            // Get the message first...
-            Message msg = dest.getNextMessage();
-            String data = new String(msg.getData());
+        // The receiver's connection. Micronaut only cancels the stream after
+        // a write to a closed connection fails, which is too late: the message
+        // written would be lost. Netty marks the channel inactive when it
+        // reads the close, but Micronaut turns off automatic reading while it
+        // sends a response, so ask for a read: a receiver sends nothing after
+        // its request, so the next thing read is the close itself
+        Channel channel = (request instanceof NettyHttpRequest<?> netty)
+                ? netty.getChannelHandlerContext().channel()
+                : null;
+        watchForClose(channel);
 
-            // Then deliver it...
-            emitter.onNext(
-                    Event.of(data)
-            );
+        // How many more messages the connection has asked for. Messages are
+        // taken from the queue only against this demand, so they aren't taken
+        // faster than they can be sent
+        AtomicLong demand = new AtomicLong();
 
-            // Finally delete it after delivery...
-            dest.deleteMessage(msg.getId());
-        }).subscribeOn(Schedulers.io());
+        return Flowable.<Event<String>>create(emitter -> {
+            Message msg = null;
+            try {
+                while (!emitter.isCancelled() && connected(channel)) {
+                    // Wait until the connection can accept another message
+                    if (demand.get() == 0) {
+                        synchronized (demand) {
+                            if (demand.get() == 0) {
+                                demand.wait(1000);
+                            }
+                        }
+                        continue;
+                    }
+
+                    // Wait a second at a time, so a receiver that has gone is
+                    // noticed instead of being handed the next message
+                    msg = dest.pollNextMessage(1, TimeUnit.SECONDS);
+                    if (msg == null) {
+                        watchForClose(channel);
+                        continue;
+                    }
+
+                    if (emitter.isCancelled() || !connected(channel)) {
+                        // The receiver went away while we waited; keep the message
+                        break;
+                    }
+
+                    // Deliver it, then delete it
+                    emitter.onNext(Event.of(new String(msg.getData())));
+                    dest.deleteMessage(msg.getId());
+                    msg = null;
+                    demand.getAndUpdate(n -> n == Long.MAX_VALUE ? n : n - 1);
+                }
+            } catch (InterruptedException e) {
+                // The stream was cancelled while waiting
+            } finally {
+                if (msg != null) {
+                    dest.returnMessage(msg.getId());
+                }
+            }
+            // The loop only ends when the receiver has gone, so there's no
+            // one to complete the stream for
+        }, BackpressureStrategy.BUFFER)
+        .doOnRequest(n -> {
+            demand.accumulateAndGet(n, (have, more) ->
+                    have + more < 0 ? Long.MAX_VALUE : have + more);
+            synchronized (demand) {
+                demand.notifyAll();
+            }
+        })
+        // requestOn=false: deliver requests on the caller's thread, since the
+        // I/O thread is busy running the loop above
+        .subscribeOn(Schedulers.io(), false);
     }
 
     //
@@ -85,6 +146,16 @@ public class QueueController extends Messenger {
         }
 
         return HttpResponse.status(HttpStatus.UNAUTHORIZED, "Not authenticated");
+    }
+
+    private static boolean connected(Channel channel) {
+        return channel == null || channel.isActive();
+    }
+
+    private static void watchForClose(Channel channel) {
+        if (channel != null && channel.isActive()) {
+            channel.read();
+        }
     }
 
     private void loadSavedMessages() {

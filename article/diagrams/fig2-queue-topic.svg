@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="410" viewBox="0 0 960 410" role="img" aria-labelledby="t d">
+  <title id="t">Queues and topics</title>
+  <desc id="d">Left, a queue: a sender sends messages 1, 2 and 3, which wait in the queue; worker A receives 1 and 3 and worker B receives 2, so each message goes to exactly one receiver. Right, a topic: a publisher sends 1, 2 and 3 in quick succession; the topic keeps only the latest, 3, which every connected subscriber receives; a subscriber that joins later gets only the next message.</desc>
+  <defs>
+    <style>
+      text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 13px; fill: #1f2937; }
+      .ttl { font-size: 15px; font-weight: 600; }
+      .sm, .sm text { font-size: 12px; fill: #374151; }
+      .xs, .xs text { font-size: 11px; fill: #6b7280; }
+      .b { font-weight: 600; }
+      .c { text-anchor: middle; }
+      .qpanel { fill: #FFF7ED; stroke: #FDBA74; stroke-width: 1.5; }
+      .tpanel { fill: #F0F9FF; stroke: #7DD3FC; stroke-width: 1.5; }
+      .obj { fill: #ffffff; stroke: #374151; stroke-width: 1.25; }
+      .late { fill: #ffffff; stroke: #9CA3AF; stroke-width: 1.25; stroke-dasharray: 4 3; }
+      .holder { fill: #ffffff; stroke: #9A3412; stroke-width: 1.25; }
+      .tholder { fill: #ffffff; stroke: #0369A1; stroke-width: 1.25; }
+      .chip { fill: #FFEDD5; stroke: #C2410C; stroke-width: 1; }
+      .tchip { fill: #DBEAFE; stroke: #2563EB; stroke-width: 1; }
+      .ghost { fill: #F9FAFB; stroke: #D1D5DB; stroke-width: 1; stroke-dasharray: 3 2; }
+      .ghost-t { fill: #9CA3AF; }
+      .arr { stroke: #374151; stroke-width: 1.5; fill: none; marker-end: url(#ah); }
+      .ref { stroke: #6b7280; stroke-width: 1.25; fill: none; stroke-dasharray: 4 3; marker-end: url(#ah2); }
+    </style>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#374151"/>
+    </marker>
+    <marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+  </defs>
+  <rect width="960" height="410" fill="#ffffff"/>
+
+  <!-- Queue -->
+  <rect class="qpanel" x="20" y="20" width="450" height="370" rx="10"/>
+  <text x="40" y="48" class="ttl">Queue</text>
+  <text x="96" y="48" class="sm">point to point</text>
+
+  <rect class="obj" x="40" y="146" width="84" height="54" rx="6"/>
+  <text x="82" y="171" class="b c">Sender</text>
+  <text x="82" y="188" class="xs c">sends 1, 2, 3</text>
+  <path class="arr" d="M124,173 H160"/>
+
+  <text x="237" y="128" class="xs c">waiting, oldest first</text>
+  <rect class="holder" x="162" y="138" width="150" height="70" rx="8"/>
+  <rect class="chip" x="175" y="155" width="36" height="36" rx="5"/><text x="193" y="178" class="b c">3</text>
+  <rect class="chip" x="219" y="155" width="36" height="36" rx="5"/><text x="237" y="178" class="b c">2</text>
+  <rect class="chip" x="263" y="155" width="36" height="36" rx="5"/><text x="281" y="178" class="b c">1</text>
+
+  <rect class="obj" x="366" y="88" width="94" height="54" rx="6"/>
+  <text x="413" y="112" class="b c">Worker A</text>
+  <text x="413" y="129" class="xs c">gets 1 and 3</text>
+  <rect class="obj" x="366" y="204" width="94" height="54" rx="6"/>
+  <text x="413" y="228" class="b c">Worker B</text>
+  <text x="413" y="245" class="xs c">gets 2</text>
+  <path class="arr" d="M312,163 C340,163 336,115 364,115"/>
+  <path class="arr" d="M312,183 C340,183 336,231 364,231"/>
+
+  <text x="40" y="296" class="sm">•  Each message goes to exactly one receiver</text>
+  <text x="40" y="318" class="sm">•  Messages wait while no receiver is connected</text>
+  <text x="40" y="340" class="sm">•  Saved in the chosen store until they're sent</text>
+  <text x="40" y="362" class="sm">•  For work that must be done once: orders, jobs</text>
+
+  <!-- Topic -->
+  <rect class="tpanel" x="490" y="20" width="450" height="370" rx="10"/>
+  <text x="510" y="48" class="ttl">Topic</text>
+  <text x="556" y="48" class="sm">publish/subscribe</text>
+
+  <rect class="obj" x="510" y="146" width="84" height="54" rx="6"/>
+  <text x="552" y="171" class="b c">Publisher</text>
+  <text x="552" y="188" class="xs c">sends 1, 2, 3</text>
+  <path class="arr" d="M594,173 H630"/>
+
+  <text x="707" y="128" class="xs c">keeps only the latest</text>
+  <rect class="tholder" x="632" y="138" width="150" height="70" rx="8"/>
+  <rect class="ghost" x="645" y="155" width="36" height="36" rx="5"/><text x="663" y="178" class="b c ghost-t">1</text>
+  <rect class="ghost" x="689" y="155" width="36" height="36" rx="5"/><text x="707" y="178" class="b c ghost-t">2</text>
+  <rect class="tchip" x="733" y="155" width="36" height="36" rx="5"/><text x="751" y="178" class="b c">3</text>
+
+  <rect class="obj" x="836" y="66" width="94" height="44" rx="6"/>
+  <text x="883" y="85" class="b c sm">Subscriber</text>
+  <text x="883" y="100" class="xs c">gets 3</text>
+  <rect class="obj" x="836" y="124" width="94" height="44" rx="6"/>
+  <text x="883" y="143" class="b c sm">Subscriber</text>
+  <text x="883" y="158" class="xs c">gets 3</text>
+  <rect class="obj" x="836" y="182" width="94" height="44" rx="6"/>
+  <text x="883" y="201" class="b c sm">Subscriber</text>
+  <text x="883" y="216" class="xs c">gets 3</text>
+  <path class="arr" d="M782,160 C810,160 808,88 834,88"/>
+  <path class="arr" d="M782,168 C808,168 808,146 834,146"/>
+  <path class="arr" d="M782,180 C808,180 808,204 834,204"/>
+
+  <rect class="late" x="836" y="240" width="94" height="44" rx="6"/>
+  <text x="883" y="259" class="b c sm">Joins later</text>
+  <text x="883" y="274" class="xs c">gets the next</text>
+
+  <text x="510" y="296" class="sm">•  Every connected subscriber gets each message</text>
+  <text x="510" y="318" class="sm">•  A quick burst can arrive as just its last message</text>
+  <text x="510" y="340" class="sm">•  Nothing is kept for subscribers who join later</text>
+  <text x="510" y="362" class="sm">•  So send the full current state in every message</text>
+</svg>
