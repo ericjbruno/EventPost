@@ -414,8 +414,7 @@ MessageServer/
 │   └── persist/                    Persistence: NoHeapDB and Oracle NoSQL
 ├── sample-apps/                    Sample applications
 ├── article/                        The article (ARTICLE.md) and its diagrams
-├── site/                           Article page for ericbruno.com:
-│                                   cd site && npm install && npm run build
+├── site/MessageServer.html        Single-page website for MessageServer
 ├── pom.xml
 └── run                             Starts the server
 ```

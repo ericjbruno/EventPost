@@ -2,7 +2,3 @@ target/
 .DS_Store
 *.class
 *.jar
-
-# Node packages for the article page build
-site/node_modules/
-site/package-lock.json
