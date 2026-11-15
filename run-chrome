@@ -1,0 +1,1 @@
+google-chrome --disable-web-security --user-data-dir="/home/ebruno" /home/ebruno/Dropbox/dev/Micronaut/thermometer/index.html
