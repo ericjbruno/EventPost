@@ -14,7 +14,7 @@
                   source.close();
               }
               
-              source = new EventSource("http://localhost:8080/messageserver/api/topic/temp1");
+              source = new EventSource("http://localhost:8080/eventpost/api/topic/temp1");
               
               source.onerror = function(event) {
                   console.log("SSE onerror " + event);
