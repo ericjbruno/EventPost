@@ -10,7 +10,7 @@ public class QueueReceiver implements SSECallback {
 
     SSEDataSubscriber sse = null;
 
-    protected static String serverURI = "http://localhost:8080/messageserver";
+    protected static String serverURI = "http://localhost:8080/eventpost";
     protected static String queueName = "queue1";
 
     String cloudAuthString = "test:welcome1";
