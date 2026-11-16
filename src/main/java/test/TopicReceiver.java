@@ -10,7 +10,7 @@ import sselibrary.SSEDataSubscriber;
 public class TopicReceiver implements SSECallback {
 	SSEDataSubscriber sse;
 	
-	protected static String serverURI = "http://localhost:8080/messageserver";
+	protected static String serverURI = "http://localhost:8080/eventpost";
 	protected static String topicName = "topic1";
 	
 	String cloudAuthString = "test:welcome1";
