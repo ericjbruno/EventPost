@@ -25,12 +25,12 @@ public class StockWatcher {
     public static void main(String[] args) throws Exception {
         Set<String> watchList = Set.of(args);
         Map<String, Double> lastPrices = new HashMap<>();
-        MessageServerClient client = new MessageServerClient();
+        EventPostClient client = new EventPostClient();
 
         System.out.println("Watching the '" + TOPIC + "' topic"
                 + (watchList.isEmpty() ? "" : " for " + String.join(", ", watchList)) + "...");
 
-        client.subscribe(MessageServerClient.Type.TOPIC, TOPIC, update -> {
+        client.subscribe(EventPostClient.Type.TOPIC, TOPIC, update -> {
             Matcher time = TIME.matcher(update);
             StringBuilder line = new StringBuilder(time.find() ? time.group(1) : "");
 

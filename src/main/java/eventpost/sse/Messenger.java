@@ -1,4 +1,4 @@
-package messageserver.sse;
+package eventpost.sse;
 
 import io.micronaut.http.HttpResponse;
 import java.io.PrintWriter;

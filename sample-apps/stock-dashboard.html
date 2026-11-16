@@ -2,15 +2,15 @@
 <!--
   Topic sample, browser subscriber: a live stock price dashboard.
 
-  Browsers can subscribe to MessageServer directly with the built-in
+  Browsers can subscribe to EventPost directly with the built-in
   EventSource API. This page listens on the same "stocks" topic as
   StockWatcher, so start StockTicker.java to see prices move.
 
-  Start the server from the MessageServer folder so it also serves this page:
+  Start the server from the project folder so it also serves this page:
 
     java -Dmicronaut.router.static-resources.samples.paths=file:sample-apps \
          '-Dmicronaut.router.static-resources.samples.mapping=/samples/**' \
-         -jar target/MessageServer-1.0-SNAPSHOT.jar
+         -jar target/EventPost-1.0-SNAPSHOT.jar
 
   Then open http://localhost:8080/samples/stock-dashboard.html. Add
   ?server=http://host:port to the page URL to use another server (that
@@ -66,7 +66,7 @@
   </table>
 </main>
 <script>
-  // The page is served by MessageServer, so the API is on the same origin
+  // The page is served by EventPost, so the API is on the same origin
   const server = new URLSearchParams(location.search).get("server")
       || (location.protocol.startsWith("http") ? location.origin : "http://localhost:8080");
   const status = document.getElementById("status");
@@ -75,7 +75,7 @@
 
   // Subscribe to the "stocks" topic. Each message is one JSON object:
   // {"time":"14:03:05","AAPL":228.91,"MSFT":414.87,...}
-  const events = new EventSource(server + "/messageserver/api/topic/stocks");
+  const events = new EventSource(server + "/eventpost/api/topic/stocks");
 
   events.onopen = () => {
     status.textContent = "Connected, waiting for prices…";

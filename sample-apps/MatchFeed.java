@@ -26,11 +26,11 @@ public class MatchFeed {
     static String lastShoutout = "";
 
     public static void main(String[] args) throws Exception {
-        MessageServerClient client = new MessageServerClient();
+        EventPostClient client = new EventPostClient();
         System.out.println("Following the '" + TOPIC + "' topic...");
 
         // The state arrives every second or so; print only what's new
-        client.subscribe(MessageServerClient.Type.TOPIC, TOPIC, state -> {
+        client.subscribe(EventPostClient.Type.TOPIC, TOPIC, state -> {
             String event = lastMatch(EVENT, state);
             if (!event.isEmpty() && !event.equals(lastEvent)) {
                 lastEvent = event;

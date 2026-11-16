@@ -1,4 +1,4 @@
-package messageserver;
+package eventpost;
 
 import io.micronaut.http.HttpParameters;
 import io.micronaut.http.HttpRequest;
@@ -22,17 +22,19 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import messageserver.persist.MessagePersistance;
-import messageserver.persist.MessagePersistanceFactory;
-import messageserver.sse.Message;
-import messageserver.sse.Messenger;
-import messageserver.sse.Queue;
+import eventpost.persist.MessagePersistance;
+import eventpost.persist.MessagePersistanceFactory;
+import eventpost.sse.Message;
+import eventpost.sse.Messenger;
+import eventpost.sse.Queue;
 import org.reactivestreams.Publisher;
 
 /**
  * @author ericjbruno
  */
-@Controller("/messageserver/api/")
+// Served at /eventpost/api, and at /messageserver/api, the path used before
+// the rename to EventPost, so existing clients keep working
+@Controller
 public class QueueController extends Messenger {
 
     private MessagePersistance messageDB
@@ -47,7 +49,7 @@ public class QueueController extends Messenger {
     // Queue Listener calls this. Returns a reactive streams
     // publisher object to emit SSE events
     //
-    @Get("/queue/{name}")
+    @Get(uris = {"/eventpost/api/queue/{name}", "/messageserver/api/queue/{name}"})
     @Produces(MediaType.TEXT_EVENT_STREAM)
     public Publisher<Event<String>> index(Optional<String> name, HttpRequest<?> request) {
         // Determine queue to listen to
@@ -131,7 +133,7 @@ public class QueueController extends Messenger {
     // and then delivered to at most one listener
     //
     @Consumes(MediaType.TEXT_EVENT_STREAM)
-    @Post("/queue/publish")
+    @Post(uris = {"/eventpost/api/queue/publish", "/messageserver/api/queue/publish"})
     public HttpResponse<?> queue(Session session,
             HttpRequest<?> request,
             @Body String data) {

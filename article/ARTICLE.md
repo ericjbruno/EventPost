@@ -4,7 +4,7 @@
 
 ---
 
-A few years ago, I wrote about a simple, reliable messaging system I built around Micronaut's support for HTML5 server-sent events (SSE). It grew out of an end-to-end IoT project, and it offered both queues and publish/subscribe topics over plain HTTP, with queued messages stored in Oracle NoSQL Database. I recently brought [MessageServer](https://github.com/ericjbruno/MessageServer) up to date, and it changed more than I expected along the way. It now runs on Micronaut 5 and Java 26, it stores messages off the Java heap in [NoHeapDB](https://github.com/ericjbruno/NoHeapDB) by default, you choose the database with a startup setting, and a handful of bugs that only showed up under load are fixed.
+A few years ago, I wrote about a simple, reliable messaging system I built around Micronaut's support for HTML5 server-sent events (SSE). It grew out of an end-to-end IoT project, and it offered both queues and publish/subscribe topics over plain HTTP, with queued messages stored in Oracle NoSQL Database. I recently brought it up to date and gave it a new name, [EventPost](https://github.com/ericjbruno/MessageServer) (it was called MessageServer), and it changed more than I expected along the way. It now runs on Micronaut 5 and Java 26, it stores messages off the Java heap in [NoHeapDB](https://github.com/ericjbruno/NoHeapDB) by default, you choose the database with a startup setting, and a handful of bugs that only showed up under load are fixed.
 
 This article walks through the new version using one example, a live sports Match Center, built from a few browser pages and a small Java program. If you read the original, you'll recognize the core design; I'll point out what changed, and why.
 
@@ -12,15 +12,15 @@ Like my recent NoHeapDB article, this one comes with a note on how the work was 
 
 ## Server-Sent Events in One Paragraph
 
-SSE is a server push technology: a client makes an ordinary HTTP GET, and the server keeps the response open, writing a line that starts with `data:` each time it has something to send. Browsers support it with the built-in `EventSource` interface, which reconnects on its own, and any language with an HTTP client can read the stream. There's no special port or binary protocol, and it passes through firewalls like any web request. MessageServer uses the same format in the other direction too: you publish by POSTing `data:` lines with the `text/event-stream` content type.
+SSE is a server push technology: a client makes an ordinary HTTP GET, and the server keeps the response open, writing a line that starts with `data:` each time it has something to send. Browsers support it with the built-in `EventSource` interface, which reconnects on its own, and any language with an HTTP client can read the stream. There's no special port or binary protocol, and it passes through firewalls like any web request. EventPost uses the same format in the other direction too: you publish by POSTing `data:` lines with the `text/event-stream` content type.
 
 ## The Architecture, Then and Now
 
-The overall shape hasn't changed (Figure 1). A Micronaut application exposes two controllers under `/messageserver/api`, one for queues and one for topics, and both extend a `Messenger` base class that turns each `data:` line of a POST into a message. Topics live entirely in memory. Queues keep only message IDs in memory and save each message body through a `MessagePersistance` interface, so a queue can hold far more than the heap could.
+The overall shape hasn't changed (Figure 1). A Micronaut application exposes two controllers under `/eventpost/api`, one for queues and one for topics, and both extend a `Messenger` base class that turns each `data:` line of a POST into a message. Topics live entirely in memory. Queues keep only message IDs in memory and save each message body through a `MessagePersistance` interface, so a queue can hold far more than the heap could.
 
-![Clients on the left publish with POST and receive an SSE stream; MessageServer's controllers, Topic, Queue and Messenger in the middle; three storage options on the right](diagrams/fig1-architecture.png)
+![Clients on the left publish with POST and receive an SSE stream; EventPost's controllers, Topic, Queue and Messenger in the middle; three storage options on the right](diagrams/fig1-architecture.png)
 
-*Figure 1. MessageServer's architecture. Clients need nothing but HTTP. Queue messages are saved in one of three stores, chosen at startup.*
+*Figure 1. EventPost's architecture. Clients need nothing but HTTP. Queue messages are saved in one of three stores, chosen at startup.*
 
 What's different is on either side of the server. On the left, the clients no longer need my `sselibrary` helper classes; the JDK's `java.net.http.HttpClient` and the browser's `fetch()` and `EventSource` are enough. On the right, the persistence layer, which was always an interface, now has a second implementation, and the factory picks one when the server starts.
 
@@ -50,7 +50,7 @@ Republishing the state every second does double duty. It drives the clock on eve
 
 *Figure 4. A Scoreboard in the browser, with a fan's shout-out featured by the scorekeeper.*
 
-The whole page is plain HTML and JavaScript, with no libraries. Everything it needs from MessageServer fits in the two functions in Listing 1.
+The whole page is plain HTML and JavaScript, with no libraries. Everything it needs from EventPost fits in the two functions in Listing 1.
 
 ```javascript
 // Publish one message (a single line of text) to a queue or topic
@@ -93,7 +93,7 @@ subscribe("queue", "shoutouts", (shout) => { inbox.unshift(shout); renderKeeper(
 
 *Listing 2. The Match Center's four roles (condensed from match-center.html).*
 
-On the Java side, MatchFeed uses a small `MessageServerClient` class from the sample code, about 90 lines with comments. Its `subscribe()` method sends a GET and reads the response line by line, handing each `data:` line to a callback (Listing 3). This is the same job my `SSEDataSubscriber` class did with a thread and a `URLConnection`, but `HttpClient` with `BodyHandlers.ofLines()` makes it a few lines long.
+On the Java side, MatchFeed uses a small `EventPostClient` class from the sample code, about 90 lines with comments. Its `subscribe()` method sends a GET and reads the response line by line, handing each `data:` line to a callback (Listing 3). This is the same job my `SSEDataSubscriber` class did with a thread and a `URLConnection`, but `HttpClient` with `BodyHandlers.ofLines()` makes it a few lines long.
 
 ```java
 HttpResponse<Stream<String>> response = http.send(request, HttpResponse.BodyHandlers.ofLines());
@@ -104,7 +104,7 @@ try (Stream<String> lines = response.body()) {
 }
 
 // In MatchFeed: print each new event as the match state arrives
-client.subscribe(MessageServerClient.Type.TOPIC, "match", state -> { ... });
+client.subscribe(EventPostClient.Type.TOPIC, "match", state -> { ... });
 ```
 
 *Listing 3. Receiving in Java with java.net.http.HttpClient.*
@@ -118,7 +118,7 @@ Run it alongside the browsers and it prints the match as it happens:
     📣 Ada: What a strike! Lions all the way 🦁
 ```
 
-The sample programs are single source files. With Java 22 or later, `java MatchFeed.java` compiles and runs it, along with `MessageServerClient.java` from the same folder, with no build step.
+The sample programs are single source files. With Java 22 or later, `java MatchFeed.java` compiles and runs it, along with `EventPostClient.java` from the same folder, with no build step.
 
 ## Inside the Server
 
@@ -194,24 +194,23 @@ In the original article, I noted that the persistence factory could be configure
 The factory reads the settings before Micronaut starts (Listing 6). Only the chosen class is ever loaded, so in NoHeapDB mode there's no need for Oracle NoSQL to be running, and a typo in a setting, or a database that isn't reachable, stops the server immediately instead of at the first message.
 
 ```java
-String type = System.getProperty("messageserver.persistence");
+// The system property eventpost.persistence, or else the
+// environment variable EVENTPOST_PERSISTENCE
+String type = Settings.get("persistence");
 if (type == null) {
-    type = System.getenv("MESSAGESERVER_PERSISTENCE");
-}
-if (type == null || type.isBlank()) {
     type = "noheapdb";
 }
 
 switch (type.trim().toLowerCase()) {
     case "oraclekv": db = MessageNoSQL.getInstance(); break;
     case "noheapdb": db = MessageNoHeapDB.getInstance(); break;
-    default: throw new IllegalArgumentException("Unknown messageserver.persistence '" + type + "'");
+    default: throw new IllegalArgumentException("Unknown eventpost.persistence '" + type + "'");
 }
 ```
 
 *Listing 6. Choosing the store (condensed from MessagePersistanceFactory).*
 
-NoHeapDB is my off-heap key-value store, which I wrote about separately. It keeps data in the same process as the application but outside the Java heap, in memory segments the garbage collector never scans, so a large backlog of queued messages adds no GC pressure. For MessageServer, that's a good fit: a queue's backlog can grow large while receivers catch up, and keeping it out of the heap keeps the server's pauses short. The `MessageNoHeapDB` class stores each message under the key `queueName/messageId` (Listing 7).
+NoHeapDB is my off-heap key-value store, which I wrote about separately. It keeps data in the same process as the application but outside the Java heap, in memory segments the garbage collector never scans, so a large backlog of queued messages adds no GC pressure. For EventPost, that's a good fit: a queue's backlog can grow large while receivers catch up, and keeping it out of the heap keeps the server's pauses short. The `MessageNoHeapDB` class stores each message under the key `queueName/messageId` (Listing 7).
 
 ```java
 public boolean saveMessage(String destinationName, Long messageId, String message) throws Exception {
@@ -233,7 +232,7 @@ while (keys.hasNext()) {
 
 *Listing 7. Storing messages in NoHeapDB, and reloading them on startup (condensed from MessageNoHeapDB).*
 
-By default, the store is in memory, which needs no setup and suits development, testing and messages you could resend; they're lost when the server stops. With `-Dmessageserver.noheapdb.storage=persisted`, NoHeapDB keeps the store in memory-mapped files instead, and MessageServer reloads every waiting message when it restarts. I tested that both ways: after a normal shutdown, and after killing the server with `kill -9` partway through a run, when NoHeapDB rebuilt its index from the files and every message was delivered. Oracle NoSQL Database is still there for when queued messages belong on a dedicated database server; select it with `-Dmessageserver.persistence=oraclekv`.
+By default, the store is in memory, which needs no setup and suits development, testing and messages you could resend; they're lost when the server stops. With `-Deventpost.noheapdb.storage=persisted`, NoHeapDB keeps the store in memory-mapped files instead, and EventPost reloads every waiting message when it restarts. I tested that both ways: after a normal shutdown, and after killing the server with `kill -9` partway through a run, when NoHeapDB rebuilt its index from the files and every message was delivered. Oracle NoSQL Database is still there for when queued messages belong on a dedicated database server; select it with `-Deventpost.persistence=oraclekv`.
 
 ## How Fast Is It?
 
@@ -243,8 +242,8 @@ A sender that waits for each response before sending the next message is limited
 
 Both projects are on GitHub:
 
-- **MessageServer**, including all of the sample applications in its `sample-apps` folder: [github.com/ericjbruno/MessageServer](https://github.com/ericjbruno/MessageServer). Clone it with `git clone https://github.com/ericjbruno/MessageServer.git`, or [download it as a ZIP file](https://github.com/ericjbruno/MessageServer/archive/refs/heads/main.zip).
-- **NoHeapDB**: [github.com/ericjbruno/NoHeapDB](https://github.com/ericjbruno/NoHeapDB). Clone it with `git clone https://github.com/ericjbruno/NoHeapDB.git`, or [download it as a ZIP file](https://github.com/ericjbruno/NoHeapDB/archive/refs/heads/main.zip). It isn't on Maven Central, so run `mvn install` in its folder before building MessageServer.
+- **EventPost**, including all of the sample applications in its `sample-apps` folder: [github.com/ericjbruno/MessageServer](https://github.com/ericjbruno/MessageServer). Clone it with `git clone https://github.com/ericjbruno/MessageServer.git`, or [download it as a ZIP file](https://github.com/ericjbruno/MessageServer/archive/refs/heads/main.zip).
+- **NoHeapDB**: [github.com/ericjbruno/NoHeapDB](https://github.com/ericjbruno/NoHeapDB). Clone it with `git clone https://github.com/ericjbruno/NoHeapDB.git`, or [download it as a ZIP file](https://github.com/ericjbruno/NoHeapDB/archive/refs/heads/main.zip). It isn't on Maven Central, so run `mvn install` in its folder before building EventPost.
 
 ## Running It
 
@@ -254,13 +253,13 @@ Build the server with Maven, then start it so it also serves the sample pages. T
 mvn package
 java -Dmicronaut.router.static-resources.samples.paths=file:sample-apps \
      '-Dmicronaut.router.static-resources.samples.mapping=/samples/**' \
-     -jar target/MessageServer-1.0-SNAPSHOT.jar
+     -jar target/EventPost-1.0-SNAPSHOT.jar
 ```
 
 Open `http://localhost:8080/samples/match-center.html#scorekeeper` in one window and `http://localhost:8080/samples/match-center.html` in a few others, then run `java MatchFeed.java` from the `sample-apps` folder. For pages hosted elsewhere, start the server with `-Dmicronaut.server.cors.enabled=true` instead. The repository's README covers the rest, including an order-processing queue and a live stock ticker in Java.
 
 ## Conclusion
 
-SSE remains a refreshingly simple way to move messages: it's just HTTP, every browser speaks it, and as Listings 1 and 3 show, a client needs only a few lines in either Java or JavaScript. The new MessageServer keeps that simplicity while being much more careful with the messages themselves, and it gives you a real choice of where queued messages live, from off-heap memory to files to a dedicated database.
+SSE remains a refreshingly simple way to move messages: it's just HTTP, every browser speaks it, and as Listings 1 and 3 show, a client needs only a few lines in either Java or JavaScript. The new EventPost keeps that simplicity while being much more careful with the messages themselves, and it gives you a real choice of where queued messages live, from off-heap memory to files to a dedicated database.
 
-There's more to do. Queue delivery still isn't acknowledged: a receiver that disconnects no longer loses anything, but one that crashes loses the message it was working on, along with any already sent to it that it hadn't read yet. Acknowledgements, so the server knows what to resend, are next on my list, along with authentication. In the meantime, [download MessageServer](https://github.com/ericjbruno/MessageServer) and try the samples; I'd love to hear what you build with it.
+There's more to do. Queue delivery still isn't acknowledged: a receiver that disconnects no longer loses anything, but one that crashes loses the message it was working on, along with any already sent to it that it hadn't read yet. Acknowledgements, so the server knows what to resend, are next on my list, along with authentication. In the meantime, [download EventPost](https://github.com/ericjbruno/MessageServer) and try the samples; I'd love to hear what you build with it.

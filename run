@@ -1,2 +1,2 @@
-java -jar target/MessageServer-1.0-SNAPSHOT.jar
+java -jar target/EventPost-1.0-SNAPSHOT.jar
 

@@ -1,11 +1,11 @@
-package messageserver.sse;
+package eventpost.sse;
 
 import java.util.ArrayList;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import messageserver.persist.MessagePersistance;
-import messageserver.persist.MessagePersistanceFactory;
+import eventpost.persist.MessagePersistance;
+import eventpost.persist.MessagePersistanceFactory;
 
 /**
  * @author ericjbruno

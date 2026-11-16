@@ -67,9 +67,9 @@
   <text x="672" y="216" class="xs">KV store at 127.0.0.1:5001</text>
   <text x="660" y="254" class="sm">•  A separate database server</text>
   <text x="660" y="276" class="sm">•  Reloaded when the server restarts</text>
-  <text x="660" y="298" class="sm">•  Must be running before MessageServer</text>
+  <text x="660" y="298" class="sm">•  Must be running before EventPost</text>
   <text x="660" y="320" class="sm">•  For messages kept on dedicated</text>
   <text x="673" y="342" class="sm">database servers</text>
 
-  <text x="40" y="396" class="xs">Settings are shown without their <tspan class="mono" style="font-size:11px">messageserver.</tspan> prefix. Each is a -D system property, or an environment variable such as MESSAGESERVER_PERSISTENCE.</text>
+  <text x="40" y="396" class="xs">Settings are shown without their <tspan class="mono" style="font-size:11px">eventpost.</tspan> prefix. Each is a -D system property, or an environment variable such as EVENTPOST_PERSISTENCE.</text>
 </svg>

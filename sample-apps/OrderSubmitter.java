@@ -19,7 +19,7 @@ public class OrderSubmitter {
 
     public static void main(String[] args) throws Exception {
         int count = args.length > 0 ? Integer.parseInt(args[0]) : 10;
-        MessageServerClient client = new MessageServerClient();
+        EventPostClient client = new EventPostClient();
         Random random = new Random();
 
         for (int i = 1; i <= count; i++) {
@@ -33,7 +33,7 @@ public class OrderSubmitter {
                     "{\"orderId\":\"%s\",\"customer\":\"%s\",\"product\":\"%s\",\"quantity\":%d}",
                     orderId, customer, product, quantity);
 
-            client.publish(MessageServerClient.Type.QUEUE, QUEUE, order);
+            client.publish(EventPostClient.Type.QUEUE, QUEUE, order);
             System.out.printf("Placed order %s: %d x %s for %s%n", orderId, quantity, product, customer);
         }
 

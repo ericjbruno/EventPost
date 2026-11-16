@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
- * A minimal MessageServer client used by the sample applications. It needs
+ * A minimal EventPost client used by the sample applications. It needs
  * nothing but the JDK, and shows the whole protocol:
  *
  *   Publish:   POST {server}/queue/publish?name={queue}   (or /topic/publish)
@@ -19,22 +19,25 @@ import java.util.stream.Stream;
  *              The response is a Server-Sent Events stream; each message
  *              arrives as a "data: {message}" line.
  *
- * The server address defaults to http://localhost:8080/messageserver/api and
- * can be changed with the MESSAGESERVER_URL environment variable.
+ * The server address defaults to http://localhost:8080/eventpost/api and
+ * can be changed with the EVENTPOST_URL environment variable.
  */
-public class MessageServerClient {
+public class EventPostClient {
 
     public enum Type { QUEUE, TOPIC }
 
-    private static final String DEFAULT_URL = "http://localhost:8080/messageserver/api";
+    private static final String DEFAULT_URL = "http://localhost:8080/eventpost/api";
 
     private final String serverUrl;
     private final HttpClient http = HttpClient.newBuilder()
             .version(HttpClient.Version.HTTP_1_1)
             .build();
 
-    public MessageServerClient() {
-        String url = System.getenv("MESSAGESERVER_URL");
+    public EventPostClient() {
+        String url = System.getenv("EVENTPOST_URL");
+        if (url == null || url.isBlank()) {
+            url = System.getenv("MESSAGESERVER_URL");   // the name before EventPost
+        }
         this.serverUrl = (url == null || url.isBlank()) ? DEFAULT_URL : url;
     }
 

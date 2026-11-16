@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="500" viewBox="0 0 960 500" role="img" aria-labelledby="t d">
-  <title id="t">MessageServer architecture</title>
-  <desc id="d">Clients on the left, two browser pages and a Java program, publish with HTTP POST and receive a Server-Sent Events stream with HTTP GET. In the middle, MessageServer, a Micronaut application, has a TopicController and a QueueController, both extending Messenger. Topics keep only the latest message in memory. Queues keep message IDs in a LinkedBlockingDeque and save message bodies through the MessagePersistance interface. On the right, one of three stores is chosen at startup: NoHeapDB in memory (the default), NoHeapDB persisted to files, or an Oracle NoSQL KV store.</desc>
+  <title id="t">EventPost architecture</title>
+  <desc id="d">Clients on the left, two browser pages and a Java program, publish with HTTP POST and receive a Server-Sent Events stream with HTTP GET. In the middle, EventPost, a Micronaut application, has a TopicController and a QueueController, both extending Messenger. Topics keep only the latest message in memory. Queues keep message IDs in a LinkedBlockingDeque and save message bodies through the MessagePersistance interface. On the right, one of three stores is chosen at startup: NoHeapDB in memory (the default), NoHeapDB persisted to files, or an Oracle NoSQL KV store.</desc>
   <defs>
     <style>
       text { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 13px; fill: #1f2937; }
@@ -62,8 +62,8 @@
 
   <!-- Server -->
   <rect class="server" x="330" y="20" width="380" height="460" rx="10"/>
-  <text x="350" y="48" class="ttl">MessageServer</text>
-  <text x="350" y="66" class="xs">Micronaut 5 · Java 26 · /messageserver/api</text>
+  <text x="350" y="48" class="ttl">EventPost</text>
+  <text x="350" y="66" class="xs">Micronaut 5 · Java 26 · /eventpost/api</text>
 
   <rect class="sobj" x="350" y="88" width="160" height="68" rx="6"/>
   <text x="430" y="112" class="mono c b">TopicController</text>

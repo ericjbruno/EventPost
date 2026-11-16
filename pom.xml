@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.alluretechnology</groupId>
-    <artifactId>MessageServer</artifactId>
+    <artifactId>EventPost</artifactId>
     <version>1.0-SNAPSHOT</version>
     <url>http://maven.apache.org</url>
     <packaging>jar</packaging>
@@ -18,7 +18,7 @@
              precedence over source/target -->
         <release.version>26</release.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <exec.mainClass>messageserver.MessageServer</exec.mainClass>
+        <exec.mainClass>eventpost.EventPost</exec.mainClass>
     </properties>
     <repositories>
         <repository>
@@ -96,6 +96,13 @@
         <dependency>
             <groupId>io.micronaut</groupId>
             <artifactId>micronaut-http-server-netty</artifactId>
+        </dependency>
+
+        <!-- The Netty server uses Reactor at runtime, and the build needs it
+             to compile against NettyHttpRequest; it isn't pulled in otherwise -->
+        <dependency>
+            <groupId>io.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
         </dependency>
 
         <dependency>

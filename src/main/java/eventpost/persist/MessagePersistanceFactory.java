@@ -1,4 +1,6 @@
-package messageserver.persist;
+package eventpost.persist;
+
+import eventpost.Settings;
 
 /**
  * @author ericjbruno
@@ -6,10 +8,12 @@ package messageserver.persist;
 public class MessagePersistanceFactory {
 
     // Selects the message store: "noheapdb" (the default) or "oraclekv".
-    // Set with -Dmessageserver.persistence=... or the
-    // MESSAGESERVER_PERSISTENCE environment variable
-    public static final String PERSISTENCE_PROPERTY = "messageserver.persistence";
-    public static final String PERSISTENCE_ENV = "MESSAGESERVER_PERSISTENCE";
+    // Set with -Deventpost.persistence=... or the EVENTPOST_PERSISTENCE
+    // environment variable. The old messageserver.persistence and
+    // MESSAGESERVER_PERSISTENCE names still work; see Settings
+    public static final String PERSISTENCE_SETTING = "persistence";
+    public static final String PERSISTENCE_PROPERTY = Settings.propertyName(PERSISTENCE_SETTING);
+    public static final String PERSISTENCE_ENV = Settings.envName(PERSISTENCE_SETTING);
 
     private MessagePersistance db = null;
 
@@ -20,11 +24,8 @@ public class MessagePersistanceFactory {
     }
 
     private MessagePersistanceFactory() {
-        String type = System.getProperty(PERSISTENCE_PROPERTY);
+        String type = Settings.get(PERSISTENCE_SETTING);
         if (type == null) {
-            type = System.getenv(PERSISTENCE_ENV);
-        }
-        if (type == null || type.isBlank()) {
             type = "noheapdb";
         }
 

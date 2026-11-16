@@ -23,7 +23,7 @@ public class StockTicker {
     static final String TOPIC = "stocks";
 
     public static void main(String[] args) throws Exception {
-        MessageServerClient client = new MessageServerClient();
+        EventPostClient client = new EventPostClient();
         Random random = new Random();
         DateTimeFormatter clock = DateTimeFormatter.ofPattern("HH:mm:ss");
 
@@ -47,7 +47,7 @@ public class StockTicker {
             prices.forEach((symbol, price) -> json.append(String.format(Locale.ROOT, ",\"%s\":%.2f", symbol, price)));
             json.append("}");
 
-            client.publish(MessageServerClient.Type.TOPIC, TOPIC, json.toString());
+            client.publish(EventPostClient.Type.TOPIC, TOPIC, json.toString());
             System.out.println("Published " + json);
 
             Thread.sleep(1000);

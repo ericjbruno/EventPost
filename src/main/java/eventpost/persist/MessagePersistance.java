@@ -1,7 +1,7 @@
-package messageserver.persist;
+package eventpost.persist;
 
 import java.util.ArrayList;
-import messageserver.sse.Message;
+import eventpost.sse.Message;
 
 /**
  * @author ericjbruno

@@ -1,6 +1,6 @@
-# MessageServer
+# EventPost
 
-MessageServer is a lightweight message server for queues and publish/subscribe
+EventPost is a lightweight message server for queues and publish/subscribe
 topics, built on [Micronaut](https://micronaut.io). Clients talk to it over
 plain HTTP: they publish with a `POST` and receive messages as a stream of
 [Server-Sent Events](https://html.spec.whatwg.org/multipage/server-sent-events.html)
@@ -74,11 +74,11 @@ handled.
 
 ```sh
 mvn package
-java -jar target/MessageServer-1.0-SNAPSHOT.jar      # or ./run
+java -jar target/EventPost-1.0-SNAPSHOT.jar      # or ./run
 ```
 
 The server listens on port 8080, and every endpoint is under
-`http://localhost:8080/messageserver/api`. By default it stores queue
+`http://localhost:8080/eventpost/api`. By default it stores queue
 messages in memory with NoHeapDB, so it needs no database running. On
 startup it prints the storage it's using:
 
@@ -92,18 +92,18 @@ startup it prints the storage it's using:
 In one terminal, listen on a queue named `greetings`:
 
 ```sh
-curl -N http://localhost:8080/messageserver/api/queue/greetings
+curl -N http://localhost:8080/eventpost/api/queue/greetings
 ```
 
 In another, send it a message:
 
 ```sh
 curl -H "Content-Type: text/event-stream" \
-     --data-binary $'data: Hello, MessageServer!\n\n' \
-     "http://localhost:8080/messageserver/api/queue/publish?name=greetings"
+     --data-binary $'data: Hello, EventPost!\n\n' \
+     "http://localhost:8080/eventpost/api/queue/publish?name=greetings"
 ```
 
-The listener prints `data: Hello, MessageServer!`. Run the publish command
+The listener prints `data: Hello, EventPost!`. Run the publish command
 again with no listener connected, then start the listener: the message was
 waiting in the queue. Replace `queue` with `topic` in both URLs to try a
 topic, and notice that topic messages sent with no subscriber connected are
@@ -116,13 +116,13 @@ order-processing queue and a live stock-price topic in Java, and a Match
 Center web app that uses both from the browser. Each Java program is a single
 source file that needs only the JDK: run it with `java File.java`, with no
 build step and no dependencies. Java 22 or later compiles the shared
-[`MessageServerClient.java`](sample-apps/MessageServerClient.java) from the
+[`EventPostClient.java`](sample-apps/EventPostClient.java) from the
 same folder automatically. That client is under 100 lines, most of them
 comments, and shows the whole protocol; read it first.
 
-Start MessageServer, then run the samples from the `sample-apps` folder. To
-use a server somewhere other than `localhost:8080`, set `MESSAGESERVER_URL`,
-for example `MESSAGESERVER_URL=http://myhost:9090/messageserver/api`.
+Start EventPost, then run the samples from the `sample-apps` folder. To
+use a server somewhere other than `localhost:8080`, set `EVENTPOST_URL`,
+for example `EVENTPOST_URL=http://myhost:9090/eventpost/api`.
 
 ### Order processing (queue)
 
@@ -244,14 +244,14 @@ state, and the shout-outs would be shared between them.
 
 ### Serving the browser samples
 
-MessageServer can serve the `sample-apps` folder itself, so the pages and the
+EventPost can serve the `sample-apps` folder itself, so the pages and the
 API share an origin and need no CORS setting or separate web server. From the
-MessageServer folder:
+project folder:
 
 ```sh
 java -Dmicronaut.router.static-resources.samples.paths=file:sample-apps \
      '-Dmicronaut.router.static-resources.samples.mapping=/samples/**' \
-     -jar target/MessageServer-1.0-SNAPSHOT.jar
+     -jar target/EventPost-1.0-SNAPSHOT.jar
 ```
 
 The pages are then at `http://localhost:8080/samples/`. To use a page with a
@@ -260,8 +260,10 @@ needs [CORS enabled](#browser-clients-and-cors).
 
 ## HTTP API
 
-All paths are relative to `http://<host>:8080/messageserver/api`. Queue and
-topic names are created on first use.
+All paths are relative to `http://<host>:8080/eventpost/api`. Queue and
+topic names are created on first use. The same endpoints are also served
+under `/messageserver/api`, the path used before the project was renamed
+EventPost, so existing clients keep working.
 
 | Action | Request |
 |---|---|
@@ -276,7 +278,7 @@ Send the message in Server-Sent Events format, with the
 `text/event-stream` content type:
 
 ```http
-POST /messageserver/api/queue/publish?name=orders HTTP/1.1
+POST /eventpost/api/queue/publish?name=orders HTTP/1.1
 Content-Type: text/event-stream
 
 data: {"orderId":"A-1001","quantity":2}
@@ -304,25 +306,27 @@ data: {"orderId":"A-1001","quantity":2}
 
 ```
 
-From Java, read the response line by line, as `MessageServerClient` does with
+From Java, read the response line by line, as `EventPostClient` does with
 `java.net.http.HttpClient`. From a browser, use `EventSource`:
 
 ```js
-const events = new EventSource("http://localhost:8080/messageserver/api/topic/stocks");
+const events = new EventSource("http://localhost:8080/eventpost/api/topic/stocks");
 events.onmessage = (event) => console.log(JSON.parse(event.data));
 ```
 
 ## Configuration
 
 Settings can be given as Java system properties (`-D...` before `-jar`) or
-as environment variables.
+as environment variables. The names from before the project was renamed
+EventPost, such as `messageserver.persistence` and
+`MESSAGESERVER_PERSISTENCE`, still work; the new names take precedence.
 
 ### Persistence
 
 | Setting | Environment variable | Values |
 |---|---|---|
-| `messageserver.persistence` | `MESSAGESERVER_PERSISTENCE` | `noheapdb` (default) or `oraclekv` |
-| `messageserver.noheapdb.storage` | `MESSAGESERVER_NOHEAPDB_STORAGE` | `in_memory` (default) or `persisted` |
+| `eventpost.persistence` | `EVENTPOST_PERSISTENCE` | `noheapdb` (default) or `oraclekv` |
+| `eventpost.noheapdb.storage` | `EVENTPOST_NOHEAPDB_STORAGE` | `in_memory` (default) or `persisted` |
 
 - **NoHeapDB, in memory (default).** Messages are kept off the Java heap, so
   large backlogs add no garbage collection pressure. They're lost when the
@@ -334,14 +338,14 @@ as environment variables.
   NoHeapDB rebuilds its index from the stored messages on the next start.
 
   ```sh
-  java -Dmessageserver.noheapdb.storage=persisted -jar target/MessageServer-1.0-SNAPSHOT.jar
+  java -Deventpost.noheapdb.storage=persisted -jar target/EventPost-1.0-SNAPSHOT.jar
   ```
 
 - **Oracle NoSQL Database.** Messages are stored in an Oracle NoSQL KV store,
   which must be running at `127.0.0.1:5001` with the store name `kvstore`.
 
   ```sh
-  java -Dmessageserver.persistence=oraclekv -jar target/MessageServer-1.0-SNAPSHOT.jar
+  java -Deventpost.persistence=oraclekv -jar target/EventPost-1.0-SNAPSHOT.jar
   ```
 
 The storage is set up before the server starts, so an invalid setting or an
@@ -354,18 +358,18 @@ need Oracle NoSQL running.
 Use any Micronaut setting the same way. For example, to listen on port 9090:
 
 ```sh
-java -Dmicronaut.server.port=9090 -jar target/MessageServer-1.0-SNAPSHOT.jar
+java -Dmicronaut.server.port=9090 -jar target/EventPost-1.0-SNAPSHOT.jar
 ```
 
 ### Browser clients and CORS
 
 A web page served from a different origin than the server, such as
 `http://localhost:8000`, can only connect if CORS is enabled. Pages that
-MessageServer serves itself, like the
+EventPost serves itself, like the
 [browser samples](#serving-the-browser-samples), don't need it.
 
 ```sh
-java -Dmicronaut.server.cors.enabled=true -jar target/MessageServer-1.0-SNAPSHOT.jar
+java -Dmicronaut.server.cors.enabled=true -jar target/EventPost-1.0-SNAPSHOT.jar
 ```
 
 This allows requests from any web origin. Pages must be served over HTTP:
@@ -405,16 +409,17 @@ after another by the same sender reach a single receiver in that order.
 ## Project structure
 
 ```
-MessageServer/
-├── src/main/java/messageserver/
-│   ├── MessageServer.java          Application entry point
+EventPost/
+├── src/main/java/eventpost/
+│   ├── EventPost.java              Application entry point
 │   ├── QueueController.java        Queue endpoints
 │   ├── TopicController.java        Topic endpoints
+│   ├── Settings.java               Reads settings (new and old names)
 │   ├── sse/                        Queues, topics and message handling
 │   └── persist/                    Persistence: NoHeapDB and Oracle NoSQL
 ├── sample-apps/                    Sample applications
 ├── article/                        The article (ARTICLE.md) and its diagrams
-├── site/MessageServer.html        Single-page website for MessageServer
+├── site/EventPost.html             Single-page website for EventPost
 ├── pom.xml
 └── run                             Starts the server
 ```

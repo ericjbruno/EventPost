@@ -1,6 +1,6 @@
-package messageserver;
+package eventpost;
 
-import messageserver.sse.Messenger;
+import eventpost.sse.Messenger;
 import io.micronaut.http.HttpParameters;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -17,13 +17,15 @@ import io.micronaut.session.Session;
 import io.reactivex.Flowable;
 import io.reactivex.schedulers.Schedulers;
 import java.util.Optional;
-import messageserver.sse.Topic;
+import eventpost.sse.Topic;
 import org.reactivestreams.Publisher;
 
 /**
  * @author ericjbruno
  */
-@Controller("/messageserver/api")
+// Served at /eventpost/api, and at /messageserver/api, the path used before
+// the rename to EventPost, so existing clients keep working
+@Controller
 public class TopicController extends Messenger {
     //
     // Pub/Sub
@@ -31,7 +33,7 @@ public class TopicController extends Messenger {
 
     // Topic Subscriptions are handled here
     //
-    @Get("/topic/{name}")
+    @Get(uris = {"/eventpost/api/topic/{name}", "/messageserver/api/topic/{name}"})
     @Produces(MediaType.TEXT_EVENT_STREAM)
     public Publisher<Event<String>> index(Optional<String> name) {
         // Determine topic to listen to
@@ -51,7 +53,7 @@ public class TopicController extends Messenger {
     // Topic publishers and publications are handled here
     //
     @Consumes(MediaType.TEXT_EVENT_STREAM)
-    @Post("/topic/publish")
+    @Post(uris = {"/eventpost/api/topic/publish", "/messageserver/api/topic/publish"})
     public HttpResponse<?> topic(Session session,
             HttpRequest<?> request,
             @Body String data) {

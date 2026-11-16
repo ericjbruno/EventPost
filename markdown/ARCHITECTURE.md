@@ -1,8 +1,8 @@
-# MessageServer Architecture Documentation
+# EventPost Architecture Documentation
 
 ## Overview
 
-MessageServer is a lightweight pub/sub and queue messaging server built with Micronaut 4.2.0 that leverages Server-Sent Events (SSE) for real-time message delivery. The system provides both ephemeral (topics) and durable (queues) messaging patterns, making it suitable for building event-driven applications.
+EventPost is a lightweight pub/sub and queue messaging server built with Micronaut 4.2.0 that leverages Server-Sent Events (SSE) for real-time message delivery. The system provides both ephemeral (topics) and durable (queues) messaging patterns, making it suitable for building event-driven applications.
 
 ## Technology Stack
 
@@ -17,9 +17,9 @@ MessageServer is a lightweight pub/sub and queue messaging server built with Mic
 ## Project Structure
 
 ```
-MessageServer/
-├── src/main/java/messageserver/
-│   ├── MessageServer.java              # Application entry point
+EventPost/
+├── src/main/java/eventpost/
+│   ├── EventPost.java              # Application entry point
 │   ├── TopicController.java            # REST endpoints for topics
 │   ├── QueueController.java            # REST endpoints for queues
 │   ├── sse/
@@ -42,13 +42,13 @@ MessageServer/
 
 ### 1. Application Entry Point
 
-**File**: `MessageServer.java`
+**File**: `EventPost.java`
 
 The main class that bootstraps the Micronaut application. Contains utility methods for logging and system monitoring using JMX MBeans.
 
 ```java
 public static void main(String[] args) {
-    Micronaut.run(MessageServer.class);
+    Micronaut.run(EventPost.class);
 }
 ```
 
@@ -56,7 +56,7 @@ public static void main(String[] args) {
 
 #### TopicController
 
-**Endpoint Base**: `/messageserver/api`
+**Endpoint Base**: `/eventpost/api`
 
 **Responsibilities**:
 - Manages pub/sub topic subscriptions and publications
@@ -76,7 +76,7 @@ public static void main(String[] args) {
 
 #### QueueController
 
-**Endpoint Base**: `/messageserver/api/`
+**Endpoint Base**: `/eventpost/api/`
 
 **Responsibilities**:
 - Manages queue-based message delivery
@@ -100,7 +100,7 @@ public static void main(String[] args) {
 
 #### Messenger (Base Class)
 
-**Location**: `messageserver.sse.Messenger`
+**Location**: `eventpost.sse.Messenger`
 
 **Responsibilities**:
 - Maintains concurrent map of all destinations (topics and queues)
@@ -116,7 +116,7 @@ HttpResponse processSend(Destination dest, String data)
 
 #### Destination (Abstract Base)
 
-**Location**: `messageserver.sse.Destination`
+**Location**: `eventpost.sse.Destination`
 
 **Responsibilities**:
 - Common interface for topics and queues
@@ -131,7 +131,7 @@ abstract boolean addMessage(String data)
 
 #### Topic Implementation
 
-**Location**: `messageserver.sse.Topic`
+**Location**: `eventpost.sse.Topic`
 
 **Pattern**: Pub/Sub (Broadcast)
 
@@ -148,7 +148,7 @@ abstract boolean addMessage(String data)
 
 #### Queue Implementation
 
-**Location**: `messageserver.sse.Queue`
+**Location**: `eventpost.sse.Queue`
 
 **Pattern**: Point-to-Point
 
@@ -168,7 +168,7 @@ abstract boolean addMessage(String data)
 
 #### MessagePersistance (Interface)
 
-**Location**: `messageserver.persist.MessagePersistance`
+**Location**: `eventpost.persist.MessagePersistance`
 
 **Methods**:
 ```java
@@ -181,7 +181,7 @@ ArrayList<Long> getMessageIds(String destinationName)
 
 #### MessageNoSQL (Implementation)
 
-**Location**: `messageserver.persist.MessageNoSQL`
+**Location**: `eventpost.persist.MessageNoSQL`
 
 **Storage**: Oracle NoSQL KV Store
 
@@ -237,7 +237,7 @@ Publisher              Queue              NoSQL Store       Consumer
 ### Subscribe to Topic
 
 ```http
-GET /messageserver/api/topic/{topicName}
+GET /eventpost/api/topic/{topicName}
 Accept: text/event-stream
 ```
 
@@ -251,7 +251,7 @@ data: {message content}
 ### Publish to Topic
 
 ```http
-POST /messageserver/api/topic/publish?name={topicName}
+POST /eventpost/api/topic/publish?name={topicName}
 Content-Type: text/event-stream
 
 event: message
@@ -262,7 +262,7 @@ data: {message content}
 ### Listen to Queue
 
 ```http
-GET /messageserver/api/queue/{queueName}
+GET /eventpost/api/queue/{queueName}
 Accept: text/event-stream
 ```
 
@@ -271,7 +271,7 @@ Accept: text/event-stream
 ### Send to Queue
 
 ```http
-POST /messageserver/api/queue/publish?name={queueName}
+POST /eventpost/api/queue/publish?name={queueName}
 Content-Type: text/event-stream
 
 event: message
@@ -383,7 +383,7 @@ mvn clean package
 
 ### Run
 ```bash
-java -jar target/MessageServer-1.0-SNAPSHOT.jar
+java -jar target/EventPost-1.0-SNAPSHOT.jar
 ```
 
 Or use the Maven exec plugin:

@@ -2,7 +2,7 @@
 
 ## Queue messages can be lost before delivery
 
-**Where:** `src/main/java/messageserver/QueueController.java`, `index()` (lines 59–64)
+**Where:** `src/main/java/eventpost/QueueController.java`, `index()` (lines 59–64)
 
 **Problem:** A queue message is deleted from Oracle NoSQL as soon as `emitter.onNext()`
 returns. `onNext()` only hands the event to Micronaut/Netty; it does not mean the

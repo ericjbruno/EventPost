@@ -17,12 +17,12 @@ public class OrderWorker {
 
     public static void main(String[] args) throws Exception {
         String workerName = args.length > 0 ? args[0] : "Worker";
-        MessageServerClient client = new MessageServerClient();
+        EventPostClient client = new EventPostClient();
 
         System.out.println(workerName + " is waiting for orders on the '" + QUEUE + "' queue...");
 
         // Blocks, calling handleOrder() for each order this worker receives
-        client.subscribe(MessageServerClient.Type.QUEUE, QUEUE, order -> handleOrder(workerName, order));
+        client.subscribe(EventPostClient.Type.QUEUE, QUEUE, order -> handleOrder(workerName, order));
     }
 
     static void handleOrder(String workerName, String order) {

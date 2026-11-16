@@ -1,4 +1,4 @@
-package messageserver.persist;
+package eventpost.persist;
 
 import com.alluretechnology.noheapdb.DataStore;
 import com.alluretechnology.noheapdb.NoHeapDB;
@@ -8,7 +8,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
-import messageserver.sse.Message;
+import eventpost.Settings;
+import eventpost.sse.Message;
 
 /**
  * Message persistence using NoHeapDB. Message bodies are kept off-heap in a
@@ -16,16 +17,19 @@ import messageserver.sse.Message;
  * IDs are kept on-heap.
  *
  * The store is IN_MEMORY by default, so messages don't survive a restart.
- * Set -Dmessageserver.noheapdb.storage=persisted (or the
- * MESSAGESERVER_NOHEAPDB_STORAGE environment variable) to keep them in files
+ * Set -Deventpost.noheapdb.storage=persisted (or the
+ * EVENTPOST_NOHEAPDB_STORAGE environment variable) to keep them in files
  * under ~/JavaOffHeap, where they're reloaded when the server restarts.
  *
  * @author ericjbruno
  */
 public class MessageNoHeapDB implements MessagePersistance {
 
-    public static final String STORAGE_PROPERTY = "messageserver.noheapdb.storage";
-    public static final String STORAGE_ENV = "MESSAGESERVER_NOHEAPDB_STORAGE";
+    // The old messageserver.noheapdb.storage and MESSAGESERVER_NOHEAPDB_STORAGE
+    // names still work; see Settings
+    public static final String STORAGE_SETTING = "noheapdb.storage";
+    public static final String STORAGE_PROPERTY = Settings.propertyName(STORAGE_SETTING);
+    public static final String STORAGE_ENV = Settings.envName(STORAGE_SETTING);
 
     private static final String STORE_NAME = "messages";
 
@@ -66,11 +70,8 @@ public class MessageNoHeapDB implements MessagePersistance {
     }
 
     private static DataStore.Storage getStorageType() {
-        String type = System.getProperty(STORAGE_PROPERTY);
+        String type = Settings.get(STORAGE_SETTING);
         if (type == null) {
-            type = System.getenv(STORAGE_ENV);
-        }
-        if (type == null || type.isBlank()) {
             return DataStore.Storage.IN_MEMORY;
         }
 

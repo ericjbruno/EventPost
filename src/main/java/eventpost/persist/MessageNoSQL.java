@@ -1,10 +1,10 @@
-package messageserver.persist;
+package eventpost.persist;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedMap;
-import messageserver.sse.Message;
+import eventpost.sse.Message;
 import oracle.kv.Direction;
 import oracle.kv.KVStore;
 import oracle.kv.KVStoreConfig;

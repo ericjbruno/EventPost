@@ -1,4 +1,4 @@
-package messageserver.sse;
+package eventpost.sse;
 
 /**
  * @author ericjbruno

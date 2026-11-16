@@ -8,7 +8,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.alluretechnology</groupId>
-  <artifactId>MessageServer</artifactId>
+  <artifactId>EventPost</artifactId>
   <version>1.0-SNAPSHOT</version>
   <url>http://maven.apache.org</url>
   <build>
@@ -196,7 +196,7 @@
     <micronaut.version>5.2.2</micronaut.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <release.version>26</release.version>
-    <exec.mainClass>messageserver.MessageServer</exec.mainClass>
+    <exec.mainClass>eventpost.EventPost</exec.mainClass>
     <jdk.version>26</jdk.version>
   </properties>
 </project>

@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-  Match Center: a browser-only MessageServer sample that uses both a topic
+  Match Center: a browser-only EventPost sample that uses both a topic
   and a queue, with no client library. Open it in two or more windows.
 
   - The Scorekeeper view runs the match and publishes its full state to the
@@ -11,11 +11,11 @@
 
   Publishing is a fetch() POST; receiving is the browser's EventSource.
 
-  Start the server from the MessageServer folder so it also serves this page:
+  Start the server from the project folder so it also serves this page:
 
     java -Dmicronaut.router.static-resources.samples.paths=file:sample-apps \
          '-Dmicronaut.router.static-resources.samples.mapping=/samples/**' \
-         -jar target/MessageServer-1.0-SNAPSHOT.jar
+         -jar target/EventPost-1.0-SNAPSHOT.jar
 
   Then open http://localhost:8080/samples/match-center.html#scorekeeper in one
   window and http://localhost:8080/samples/match-center.html in others.
@@ -268,14 +268,14 @@
 
 <script>
   // ---------------------------------------------------------------------
-  // MessageServer access: everything a browser needs
+  // EventPost access: everything a browser needs
   // ---------------------------------------------------------------------
 
-  // The page is served by MessageServer, so the API is on the same origin.
+  // The page is served by EventPost, so the API is on the same origin.
   // Add ?server=http://host:port to use another server (that one needs CORS).
   const SERVER = new URLSearchParams(location.search).get("server")
       || (location.protocol.startsWith("http") ? location.origin : "http://localhost:8080");
-  const API = SERVER + "/messageserver/api";
+  const API = SERVER + "/eventpost/api";
 
   const TOPIC = "match";       // scorekeeper -> every scoreboard
   const QUEUE = "shoutouts";   // fans -> one scorekeeper

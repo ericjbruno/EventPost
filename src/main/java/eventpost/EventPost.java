@@ -1,4 +1,4 @@
-package messageserver;
+package eventpost;
 
 import io.micronaut.runtime.Micronaut;
 import java.lang.management.ManagementFactory;
@@ -10,14 +10,14 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
-import messageserver.persist.MessagePersistanceFactory;
+import eventpost.persist.MessagePersistanceFactory;
 
 /**
  * @author ericjbruno
  */
-public class MessageServer {
+public class EventPost {
 
-    public static String configFile = "./messageserver.properties";
+    public static String configFile = "./eventpost.properties";
 
     static Runtime rt = Runtime.getRuntime();
     static RuntimeMXBean rtBean = ManagementFactory.getRuntimeMXBean();
@@ -36,20 +36,20 @@ public class MessageServer {
     static String os = "";
 
     String webappDirLocation = "src/webapp/";
-    //private Logger logger = LoggerFactory.getLogger(MessageServer.class);
+    //private Logger logger = LoggerFactory.getLogger(EventPost.class);
 
     /////////////////////////////////////////////////////////////////////
     public static void main(String[] args) throws Exception {
-        //MessageServer server = new MessageServer();
+        //EventPost server = new EventPost();
 
         // Initialize the message store before starting, so a bad persistence
         // setting or unreachable database fails now, not on the first request
         MessagePersistanceFactory.getInstance();
 
-        Micronaut.run(MessageServer.class);
+        Micronaut.run(EventPost.class);
     }
 
-    public MessageServer() {
+    public EventPost() {
         jvmVersion = System.getProperty("java.version") + "-" + System.getProperty("java.vm.version");
         os = System.getProperty("os.name") + ", " + System.getProperty("os.arch") + ", " + System.getProperty("os.version");
         if (rtBean != null) {
@@ -58,7 +58,7 @@ public class MessageServer {
     }
 
     public static void log(String s) {
-        System.out.println("[MessageServer] " + s);
+        System.out.println("[EventPost] " + s);
     }
 
 }
