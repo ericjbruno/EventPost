@@ -10,7 +10,7 @@ import sselibrary.SSEDataPublisher;
  */
 public class TopicSender {
 
-    protected static String messageServerURI = "http://localhost:8080/messageserver";
+    protected static String eventPostURI = "http://localhost:8080/eventpost";
     protected static String topicName = "topic1";
     protected static SSEDataPublisher dataPublisher = null;
 
@@ -66,9 +66,10 @@ public class TopicSender {
 
             props.load(in);
 
-            TopicSender.messageServerURI
-                    = props.getProperty("MessageServerURI",
-                            TopicSender.messageServerURI);
+            TopicSender.eventPostURI
+                    = props.getProperty("EventPostURI",
+                            props.getProperty("MessageServerURI",   // the name before EventPost
+                            TopicSender.eventPostURI));
 
         }
         catch (Exception e) {
@@ -76,7 +77,7 @@ public class TopicSender {
         }
 
         log("-----------------------------");
-        log("Using MessageServerURI=" + messageServerURI);
+        log("Using EventPostURI=" + eventPostURI);
         log("-----------------------------");
     }
 
@@ -85,7 +86,7 @@ public class TopicSender {
     }
 
     public static void sendToServer(String data) throws Exception {
-        String url = messageServerURI + "/api/topic/publish?name=" + topicName;
+        String url = eventPostURI + "/api/topic/publish?name=" + topicName;
 
         if (dataPublisher != null) {
             dataPublisher.sendMessage(url, data, authCode);
