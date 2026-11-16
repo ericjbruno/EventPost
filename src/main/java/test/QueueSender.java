@@ -11,7 +11,7 @@ import sselibrary.SSEDataPublisher;
  * @author ericjbruno
  */
 public class QueueSender {
-	protected static String messageServerURI = "http://localhost:8080/messageserver";
+	protected static String eventPostURI = "http://localhost:8080/eventpost";
 	protected static String queueName = "queue1";
 	protected static SSEDataPublisher dataPublisher = null;
 	
@@ -99,9 +99,10 @@ public class QueueSender {
 
 			props.load(in);
 
-			QueueSender.messageServerURI = 
-					props.getProperty("MessageServerURI", 
-										QueueSender.messageServerURI);
+			QueueSender.eventPostURI = 
+					props.getProperty("EventPostURI",
+										props.getProperty("MessageServerURI",   // the name before EventPost
+										QueueSender.eventPostURI));
 			QueueSender.senderThreads = 
 					Integer.parseInt(props.getProperty("SenderThreads", 
 										String.valueOf(QueueSender.senderThreads)));
@@ -111,10 +112,10 @@ public class QueueSender {
 			e.printStackTrace();
 		}
 
-		url = messageServerURI + "/api/queue/publish?name=" + queueName;
+		url = eventPostURI + "/api/queue/publish?name=" + queueName;
 
 		log("-----------------------------");
-		log("Using MessageServerURI="+messageServerURI);
+		log("Using EventPostURI="+eventPostURI);
 		log("Using SenderThreads="+senderThreads);
 		log("-----------------------------");
 	}
@@ -123,7 +124,7 @@ public class QueueSender {
 		return false;
 	}
 	
-	static String url = messageServerURI + "/api/queue/publish?name=" + queueName;
+	static String url = eventPostURI + "/api/queue/publish?name=" + queueName;
 	public static void sendToServer(String data) throws Exception {
         SSEDataPublisher.sendMessage(url, data, authCode);
 	}
