@@ -1,3 +1,5 @@
+<img src="site/eventpost-icon.svg" alt="EventPost icon: a mailbox with its flag up, sending out events" width="112" align="right">
+
 # EventPost
 
 EventPost is a lightweight message server for queues and publish/subscribe
