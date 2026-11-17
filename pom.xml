@@ -4,7 +4,36 @@
     <groupId>com.alluretechnology</groupId>
     <artifactId>EventPost</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <url>http://maven.apache.org</url>
+    <name>EventPost</name>
+    <description>A lightweight message server for queues and publish/subscribe topics over HTTP and Server-Sent Events, built on Micronaut</description>
+    <url>https://github.com/ericjbruno/EventPost</url>
+    <inceptionYear>2019</inceptionYear>
+
+    <organization>
+        <name>Allure Technology, Inc.</name>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Eric J. Bruno</name>
+            <email>eric@ericbruno.com</email>
+            <url>https://www.ericbruno.com</url>
+        </developer>
+    </developers>
+
+    <scm>
+        <url>https://github.com/ericjbruno/EventPost</url>
+        <connection>scm:git:https://github.com/ericjbruno/EventPost.git</connection>
+        <developerConnection>scm:git:git@github.com:ericjbruno/EventPost.git</developerConnection>
+    </scm>
     <packaging>jar</packaging>
     <parent>
         <groupId>io.micronaut.platform</groupId>
