@@ -5,6 +5,16 @@
   <artifactId>QueueReceiver</artifactId>
   <name>QueueReceiver</name>
   <version>1.0-SNAPSHOT</version>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <organization>
+    <name>Allure Technology, Inc.</name>
+  </organization>
   <build>
     <plugins>
       <plugin>
