@@ -5,6 +5,18 @@
     <artifactId>TopicReceiver</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
+
+    <organization>
+        <name>Allure Technology, Inc.</name>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
     <properties>
         <micronaut.version>1.0.4</micronaut.version>
         <jdk.version>1.8</jdk.version>
