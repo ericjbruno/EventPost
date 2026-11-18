@@ -1,0 +1,5 @@
+micronaut:
+    application:
+        name: AnalyticsEngine
+    server:
+        port: 8181
