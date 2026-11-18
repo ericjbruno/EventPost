@@ -3,5 +3,5 @@ target/
 *.class
 *.jar
 
-# Leftover Node packages from the old article page build
-site/node_modules/
+# The website is kept locally, not in the repository
+site/

@@ -1,4 +1,4 @@
-<img src="site/eventpost-icon.svg" alt="EventPost icon: a mailbox with its flag up, sending out events" width="112" align="right">
+<img src="assets/eventpost-icon.svg" alt="EventPost icon: a mailbox with its flag up, sending out events" width="112" align="right">
 
 # EventPost
 
@@ -467,7 +467,7 @@ EventPost/
 ├── sample-apps/                    Sample applications
 ├── clients/                        Original Java clients, SSELibrary, thermometer page
 ├── article/                        The article (ARTICLE.md) and its diagrams
-├── site/EventPost.html             Single-page website for EventPost
+├── assets/                         The EventPost icon (SVG and PNGs)
 ├── LICENSE                         Apache License 2.0
 ├── pom.xml
 └── run                             Starts the server

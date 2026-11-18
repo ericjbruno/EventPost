@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-labelledby="t">
+  <title id="t">EventPost</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#12233a"/>
+      <stop offset="1" stop-color="#0a111d"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5fb8f0"/>
+      <stop offset="1" stop-color="#2b8fd0"/>
+    </linearGradient>
+    <linearGradient id="door" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a5dcfa"/>
+      <stop offset="1" stop-color="#6cc0f2"/>
+    </linearGradient>
+    <linearGradient id="q" x1="0" x2="1"><stop offset="0" stop-color="#f08a4b" stop-opacity="0.25"/><stop offset="0.45" stop-color="#f08a4b"/></linearGradient>
+    <linearGradient id="tp" x1="0" x2="1"><stop offset="0" stop-color="#5f93f2" stop-opacity="0.25"/><stop offset="0.45" stop-color="#5f93f2"/></linearGradient>
+    <linearGradient id="st" x1="0" x2="1"><stop offset="0" stop-color="#3cc47a" stop-opacity="0.25"/><stop offset="0.45" stop-color="#3cc47a"/></linearGradient>
+  </defs>
+
+  <!-- Tile -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- Post and ground -->
+  <rect x="150" y="318" width="40" height="112" rx="6" fill="#64748b"/>
+  <rect x="104" y="424" width="132" height="14" rx="7" fill="#334155"/>
+
+  <!-- Mailbox body (side), rounded at the back -->
+  <path d="M112 186 H282 V330 H68 V230 A44 44 0 0 1 112 186 Z" fill="url(#body)"/>
+  <!-- Seam along the top -->
+  <path d="M96 214 H272" stroke="#9fd6f7" stroke-opacity="0.45" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- Flag, raised: there's mail going out -->
+  <rect x="96" y="112" width="14" height="130" rx="5" fill="#f08a4b"/>
+  <path d="M110 112 H166 L154 132 L166 152 H110 Z" fill="#f08a4b"/>
+  <circle cx="103" cy="236" r="9" fill="#c2410c"/>
+
+  <!-- Front door, an arch, facing right -->
+  <path d="M244 330 V238 A52 52 0 0 1 348 238 V330 Z" fill="url(#door)"/>
+  <path d="M262 318 V242 A34 34 0 0 1 330 242 V318 Z" fill="none" stroke="#2b8fd0" stroke-opacity="0.55" stroke-width="6"/>
+  <!-- Handle -->
+  <rect x="288" y="252" width="16" height="30" rx="8" fill="#0a111d" fill-opacity="0.55"/>
+
+  <!-- Events leaving the box: the three bars of the EventPost mark -->
+  <rect x="356" y="208" width="110" height="22" rx="11" fill="url(#q)"/>
+  <rect x="356" y="250" width="79"  height="22" rx="11" fill="url(#tp)"/>
+  <rect x="356" y="292" width="94"  height="22" rx="11" fill="url(#st)"/>
+</svg>
