@@ -1,0 +1,2 @@
+java -jar target/QueueSender-1.0-SNAPSHOT.jar
+
