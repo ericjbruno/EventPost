@@ -20,8 +20,16 @@ QueueReceivers to see the messages shared out between them.
 
 ## Build
 
-It uses SSELibrary, which isn't on Maven Central. Install it into your local
-Maven repository first, then build this project:
+It uses [SSELibrary](../SSELibrary), which is in the same `clients` folder.
+Build everything there at once:
+
+```sh
+cd ..          # the clients folder
+mvn package
+```
+
+To build just this project, install SSELibrary into your local Maven
+repository first:
 
 ```sh
 (cd ../SSELibrary && mvn install)

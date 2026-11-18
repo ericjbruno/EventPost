@@ -236,13 +236,13 @@ By default, the store is in memory, which needs no setup and suits development, 
 
 ## How Fast Is It?
 
-A sender that waits for each response before sending the next message is limited by the HTTP round trip, at about 750 messages a second on one machine. Throughput grows roughly in proportion to the number of concurrent senders: in my tests, 16 sender threads reached 11,000 to 12,500 messages a second, every one delivered. The choice of store barely mattered, because the round trip, not the storage, sets the pace. Messages from parallel senders can be stored in any order, though; if you need both speed and strict order, batch several `data:` lines into each POST from a single sender.
+A sender that waits for each response before sending the next message is limited by the HTTP round trip, at about 750 messages a second on one machine. Throughput grows roughly in proportion to the number of concurrent senders: in my tests, 16 sender threads reached 11,000 to 12,500 messages a second, every one delivered. (The QueueSender and QueueReceiver programs I used are in the repository's `clients` folder.) The choice of store barely mattered, because the round trip, not the storage, sets the pace. Messages from parallel senders can be stored in any order, though; if you need both speed and strict order, batch several `data:` lines into each POST from a single sender.
 
 ## Get the Code
 
 Both projects are on GitHub:
 
-- **EventPost**, including all of the sample applications in its `sample-apps` folder: [github.com/ericjbruno/EventPost](https://github.com/ericjbruno/EventPost). Clone it with `git clone https://github.com/ericjbruno/EventPost.git`, or [download it as a ZIP file](https://github.com/ericjbruno/EventPost/archive/refs/heads/main.zip).
+- **EventPost**, including all of the sample applications in its `sample-apps` folder and the original Java clients in its `clients` folder: [github.com/ericjbruno/EventPost](https://github.com/ericjbruno/EventPost). Clone it with `git clone https://github.com/ericjbruno/EventPost.git`, or [download it as a ZIP file](https://github.com/ericjbruno/EventPost/archive/refs/heads/main.zip).
 - **NoHeapDB**: [github.com/ericjbruno/NoHeapDB](https://github.com/ericjbruno/NoHeapDB). Clone it with `git clone https://github.com/ericjbruno/NoHeapDB.git`, or [download it as a ZIP file](https://github.com/ericjbruno/NoHeapDB/archive/refs/heads/main.zip). It isn't on Maven Central, so run `mvn install` in its folder before building EventPost.
 
 ## Running It

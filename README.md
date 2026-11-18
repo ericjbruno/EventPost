@@ -272,6 +272,31 @@ The pages are then at `http://localhost:8080/samples/`. To use a page with a
 server elsewhere, add `?server=http://myhost:9090` to its URL; that server
 needs [CORS enabled](#browser-clients-and-cors).
 
+## Original clients
+
+The [`clients`](clients) folder holds EventPost's original Java clients and
+the library they share. They're full Maven projects, unlike the single-file
+samples above, and QueueSender is the load generator behind the numbers in
+[Performance](#performance).
+
+| Project | What it does |
+|---|---|
+| [SSELibrary](clients/SSELibrary) | The client library the Java programs share |
+| [QueueSender](clients/QueueSender) | Sends 1,000,000 messages to a queue from several threads, printing the rate |
+| [QueueReceiver](clients/QueueReceiver) | Receives from a queue, printing the rate |
+| [TopicSender](clients/TopicSender) | Publishes 10,000 messages to a topic |
+| [TopicReceiver](clients/TopicReceiver) | Prints each message from a topic |
+| [TemperatureSender](clients/TemperatureSender) | Publishes a simulated temperature reading four times a second |
+| [thermometer](clients/thermometer) | A web page that shows TemperatureSender's readings |
+
+Build them all from the `clients` folder:
+
+```sh
+cd clients && mvn package
+```
+
+Each project's README explains how to run it.
+
 ## HTTP API
 
 All paths are relative to `http://<host>:8080/eventpost/api`. Queue and
@@ -401,6 +426,14 @@ tests, 16 parallel senders reached about 12,000 messages per second, with
 NoHeapDB and with Oracle NoSQL, and every message was delivered. Batching
 several `data:` lines into one request also helps.
 
+To repeat the test, start [QueueReceiver](clients/QueueReceiver), then
+[QueueSender](clients/QueueSender) with 16 threads:
+
+```sh
+cd clients/QueueReceiver && ./run
+cd clients/QueueSender && java -jar target/QueueSender-1.0-SNAPSHOT.jar 16
+```
+
 Messages from parallel senders can be stored in any order. Messages sent one
 after another by the same sender reach a single receiver in that order.
 
@@ -432,6 +465,7 @@ EventPost/
 │   ├── sse/                        Queues, topics and message handling
 │   └── persist/                    Persistence: NoHeapDB and Oracle NoSQL
 ├── sample-apps/                    Sample applications
+├── clients/                        Original Java clients, SSELibrary, thermometer page
 ├── article/                        The article (ARTICLE.md) and its diagrams
 ├── site/EventPost.html             Single-page website for EventPost
 ├── LICENSE                         Apache License 2.0

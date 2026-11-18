@@ -22,10 +22,10 @@ library and no build step.
 ## Run
 
 Let EventPost serve the page, so the page and the server share an origin.
-From the EventPost folder:
+From the top-level EventPost folder:
 
 ```sh
-java -Dmicronaut.router.static-resources.thermometer.paths=file:../thermometer \
+java -Dmicronaut.router.static-resources.thermometer.paths=file:clients/thermometer \
      '-Dmicronaut.router.static-resources.thermometer.mapping=/thermometer/**' \
      -jar target/EventPost-1.0-SNAPSHOT.jar
 ```
@@ -36,7 +36,8 @@ Then start TemperatureSender and open
 Opening `index.html` directly from disk doesn't work: the browser sends
 `Origin: null` from a `file://` page, which EventPost refuses. To serve the
 page from another web server instead, start EventPost with CORS enabled,
-as described in the EventPost README. `run-chrome` is an older Linux script
+as described in the EventPost README under
+[Browser clients and CORS](../../README.md#browser-clients-and-cors). `run-chrome` is an older Linux script
 that works around this by turning off Chrome's web security; serving the
 page is the better choice.
 

@@ -18,12 +18,13 @@ by reading the server's stream of Server-Sent Events. It uses only the JDK and
 has no dependencies.
 
 The QueueSender, QueueReceiver, TopicSender, TopicReceiver and
-TemperatureSender programs use it.
+TemperatureSender programs in this `clients` folder use it.
 
 ## Build
 
-It needs Java 20 or later. Install it into your local Maven repository, so
-the programs that use it can find it:
+It needs Java 20 or later. `mvn package` in the `clients` folder builds it
+along with the programs that use it. To use it from another project, install
+it into your local Maven repository:
 
 ```sh
 mvn install
