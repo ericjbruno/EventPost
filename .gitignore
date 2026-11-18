@@ -5,3 +5,6 @@ target/
 
 # The website is kept locally, not in the repository
 site/
+
+# Private notes, kept locally only
+markdown/
